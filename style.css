@@ -25,7 +25,7 @@ body {
 }
 
 #game-shell {
-  width: min(100vw, 1280px);
+  width: min(100vw, calc(100vh * 16 / 9), 1280px);
   aspect-ratio: 16 / 9;
   display: grid;
   place-items: center;
@@ -45,10 +45,4 @@ body {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-}
-
-@media (max-aspect-ratio: 16 / 9) {
-  #game-shell {
-    width: 100vw;
-  }
 }

@@ -100,7 +100,12 @@ function drawPixelButton(positionX, positionY, buttonWidth, buttonHeight, label,
   rect(positionX + 7, positionY + 7, buttonWidth - 14, Math.max(8, buttonHeight * 0.24), 2);
   fill(COLORS.ink);
   textAlign(CENTER, CENTER);
-  textSize(22);
+  let buttonTextSize = 22;
+  textSize(buttonTextSize);
+  while (textWidth(label) > buttonWidth - 24 && buttonTextSize > 13) {
+    buttonTextSize -= 1;
+    textSize(buttonTextSize);
+  }
   textStyle(BOLD);
   text(label, positionX + buttonWidth / 2 + 2, positionY + buttonHeight / 2 + 2);
   fill(disabled ? "#d6d6d6" : COLORS.paper);
