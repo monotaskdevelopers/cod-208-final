@@ -1,0 +1,183 @@
+So we're doing a project for our class - our idea is written in the document attached. It will be a 2d game where the character moves to the right (auto move) and has to face challenges as mentioned in the document, with each level getting harder (the speed of the character increases), the player can use up and down arrow keys to jump and crouch.
+
+
+
+The name of the game will be "The Last Semester", the visual direction would be pixel art/pixelated inspired by mario, a similar platform based game. The idea/concept is in the document. I'll also plainly explain it to you the concept is we show visually the challenges/routine of a regular student during their semester.
+
+
+
+Ask me more questions to solidify your understanding of the concept/direction
+
+This is a compelling concept. You're essentially gamifying the "student grind" by turning relatable distractions—like the siren call of a bed or the rabbit hole of Instagram—into literal platforming obstacles. Using p5.js for a class-based structure is a smart technical choice for managing these different game states (the hallway vs. the classroom).  
++2
+
+To make sure I'm fully aligned with your vision for "The Last Semester," I have a few clarifying questions regarding the gameplay loop and tone:
+
+1. The Tone: Satire vs. Stress?
+Your mood board features quite heavy imagery, such as phones as jail cells and "doom" screens. However, you mentioned a pixelated, Mario-inspired visual style.  
++1
+
+Is the game meant to be a lighthearted satire of student life, or are you aiming for a more stressful, frantic atmosphere to reflect the "doomscrolling" and pressure of the last semester?
+
+2. The "Doomscrolling" Mechanic
+The document mentions that Instagram and partying make the protagonist lose credits.  
+
+Since the character is auto-moving to the right, how does a "distraction" like doomscrolling manifest? Does it physically pull the character back, slow them down, or is it an obstacle they must jump over/crouch under to avoid the "credit drain" zone?  
+
+3. Beat Synchronization & Minigames
+You noted that beat synchronization plays a central role in the classroom reaction game.  
+
+Will the music's BPM (beats per minute) increase as the game progresses to make the reaction-based credit earning harder?  
++1
+
+Also, regarding the 30-credit goal: is there a "Game Over" if you fall below a certain credit threshold before Week 5, or do you simply fail to get the diploma at the end?  
+
+4. Difficulty Scaling
+You mentioned assignments get harder and faster.  
+
+Will these appear as projectiles during the platforming section, or are they strictly part of the "reaction-based" classroom game?  
+
+Given the "beat synchronization" mention, is the classroom portion intended to feel like a rhythm game (e.g., Guitar Hero or Friday Night Funkin'), where the keys you press must align with the background track to earn those 6 credits?
+
+1. The moodboard is irrelevant to the concept.
+
+2. it just results in credit drain, and yes they must jump/crouch to avoid the obstacles.
+
+3. yes it will increase. so about the goal, we will have 3 different modes that user can choose from before beginning Easy (20 credits minimum) Medium (26 credits minimum) and Hard (30 credits to pass/graduate)
+
+4. Assignments will be part of the classroom game but we're thinking of switching up the "Reaction based" concept in which user had to press keys - instead of that, we will create a few questions MCQs from our actual creative coding course and use those.
+
+Got it. Discarding the mood board and focusing on the core mechanics makes the direction much clearer. Swapping the reaction-based classroom game for actual Creative Coding MCQs is a great touch—it turns the game into a literal study tool for your peers while keeping the stakes high for graduation.
+
+Here is a summary of the refined concept for "The Last Semester":
+
+1. Core Gameplay Loop
+The game is structured over 5 weeks/levels. Each week consists of two distinct phases:  
+
+
+The Commute (Platforming): The student auto-moves to the right in a pixelated 2D environment. You must jump or crouch to avoid "distractions" like Beds, Disco Balls (Partying), and Instagram icons (Doomscrolling). Hitting these obstacles results in a credit drain.  
++2
+
+
+The Classroom (MCQ): Upon reaching the classroom door, the game shifts from a platformer to a quiz mode. You will answer Multiple Choice Questions based on the real COD 208 course material to earn credits back.  
+
+2. Difficulty & Graduation Requirements
+You’ve established three distinct passing thresholds that players choose at the start:  
+
+Difficulty	Minimum Credits to Graduate
+Easy	
+
+20 Credits  
+
+Medium	
+
+26 Credits  
+
+Hard	
+
+30 Credits  
+
+As the weeks progress, the platforming speed increases, making it harder to avoid distractions.  
+
+Refining the Technical Side (p5.js)
+Since you are using a class-based structure in p5.js, you have a solid foundation for managing these states. To help me provide the best advice for your next steps, I have a couple of logic questions:  
+
+Credit Math: Does the player start with a full "bucket" of credits (e.g., 30) that drains during the platforming, or do they start at 0 and have to "save" credits by avoiding distractions and then "earn" them in the quiz?
+
+
+The Quiz Timer: In the original plan, the classroom was "reaction-based". For the MCQs, will there be a timer (to maintain the "stress" of the last semester), or can players take their time to answer?  
+
+
+UI Feedback: Since the speed increases each week, will you have a "Week Counter" or a "GPA/Credit Tracker" constantly visible on the screen so the player knows how close they are to their difficulty goal?  
+
+Once we settle the credit logic, would you like to discuss how to structure the Question class for your MCQs to make them easy to load into the game?
+
+credit math: user has to earn credits from assignments (6 credits each assignment) - 5 levels (each level is a week)
+
+
+
+quiz timer: 1 min max timer for each quiz
+
+
+
+ui feedback: both the credit tracker and a week counter.
+
+That clarifies the gameplay loop significantly. By shifting the classroom portion to actual COD 208 MCQs with a strict 1-minute timer, you are creating a high-stakes environment that directly reflects the pressure of a final semester.  
++1
+
+Here is the finalized breakdown of your project structure based on the updated mechanics:
+
+The Game Loop: "The Last Semester"
+The game will track the player's progress across 5 weeks (levels), requiring a specific credit total to graduate based on the selected difficulty.  
++1
+
+The Commute (Platforming Phase):
+
+
+Movement: The pixelated student moves automatically to the right in a 2D space.  
++2
+
+
+Obstacles: The player must use up/down arrow keys to jump or crouch to avoid beds, disco balls (partying), and Instagram icons (doomscrolling).  
++1
+
+
+Consequences: Hitting these obstacles results in a credit drain, potentially putting the player below the graduation threshold.  
++1
+
+
+Scaling Difficulty: The movement speed increases each week, making it harder to avoid these distractions.  
+
+The Classroom (Assignment Phase):
+
+
+Entry: The player enters the classroom by reaching a door at the end of the platforming section.  
++1
+
+The MCQ Quiz: Instead of a reaction-based game, players face Multiple Choice Questions from the COD 208 syllabus.
+
+
+The Stakes: Each assignment is worth 6 credits.  
+
+The Timer: The student has a maximum of 1 minute to complete the quiz, adding a layer of time-pressure.
+
+UI and Progression
+The user interface will be essential for keeping the player informed of their "graduation status" in real-time.
+
+
+Week Counter: Displays the current level (Week 1 through Week 5).  
++1
+
+Credit Tracker: A live display of the player's current credits compared to their goal.
+
+
+Graduation Thresholds: * Easy: 20 credits minimum.  
++1
+
+
+Medium: 26 credits minimum.  
++1
+
+
+Hard: 30 credits (perfect score) to graduate.  
++1
+
+Technical Implementation in p5.js
+Using a class-based structure will allow you to manage these distinct phases efficiently:  
++1
+
+
+Player Class: Handles the jump/crouch logic and the pixel art animations.  
++2
+
+
+Obstacle Class: Manages the spawning of the "distractions" and their movement speed.  
++2
+
+QuizManager Class: Handles the MCQ logic, the 1-minute timer, and credit calculation.
+
+
+GameState Manager: Switches the canvas between the "Commute" view and the "Classroom" view.  
++1
+
+Since you are using real course questions, do you already have a pool of COD 208 questions ready, or would you like suggestions on how to format a JSON file to easily load those questions into your p5.js code?

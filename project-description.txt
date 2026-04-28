@@ -1,0 +1,30 @@
+Course: COD 208 Creative Coding II
+Student names: Muratcan,Kaan,Hashir
+ 
+Project Title;
+ 
+“The Last Semester”
+ 
+Project Type;
+ 
+Select the category that best describes your project. If your project fits into multiple categories or doesn't fit neatly into one, choose the primary type or select "Other".
+[ ] Generative Art (e.g., digital images, prints, plotter drawings, etc.)
+[ ] Computational Data Visualization
+[ ] Augmented Reality (AR) Application
+[ ] Machine Learning (ML) Application
+[✓ ] Game (intreractive)
+[ ] Advergame (Game designed for advertising)
+ 
+ 
+Project Description;
+They are going to be beds, partying ( disco ball), instagram(doomscrolling) that makes the protagonist lose credits. Our protagonist is an average pixelated student( no need for gender). After the platforming section by opening a door you can get to the class. Joining the class allows a reaction based game to start which can give you 6 credits and each time you fail to push a key it lowers your credits by one. There will be easy 20 minimum credits, 26 minimum credits and 30 for hard difficulty. And after that level ends it shows how many credits they got. It will get harder as the game progresses. In 5 weeks/levels 30 credits. At the end there will be a diploma that shows you graduated. Game name is “The Last Semester”.
+ 
+Technical and Theorical approach;
+the visual design would be in a 2d space, with pixel art inspired environment and characters (like mario), the game environment would be setup in a horizontal manner where the user is moving to the right (forwards). As the game progresses, the speed increases and it gets harder for the character to avoid challenges as well as getting harder/faster assignments.
+ 
+ 
+Justification;
+The p5.js platform enables fast and flexible development of both visual and interactive elements. Directional control via the keyboard provides the player with a simple yet effective method of interaction upon this Project.
+ 
+Connection to Course Concepts;
+This project draws heavily on the fundamental ideas and techniques covered in COD 208. For instance, it focuses on designing clean but engaging user interfaces, organizing the game logic through a class-based structure to manage different elements efficiently, and integrating interactive components like buttons. Moreover, beat synchronization plays a central role as a gameplay mechanic, reinforcing the project’s connection to interactive sound design principles.
