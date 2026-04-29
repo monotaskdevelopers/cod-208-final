@@ -45,10 +45,10 @@ const WEEK_CONFIGS = [
   {
     id: 1,
     title: "Campus Wakeup",
-    subtitle: "Wide lawns, clean jumps, first-week pace",
+    subtitle: "Quadrangle paths, morning buzz, first-week pace",
     speed: 5.2,
-    length: 3850,
-    spacing: 520,
+    length: 5600,
+    spacing: 760,
     palette: {
       skyTop: "#70b6ff",
       skyBottom: "#a9d9ff",
@@ -59,16 +59,16 @@ const WEEK_CONFIGS = [
       groundShadow: "#8a5b2f",
       accent: "#f3c94a"
     },
-    patterns: ["bed", "disco", "phone", "bedDisco", "phoneBed", "discoBed"],
-    loadingText: "Packing notes for Week 1"
+    patterns: ["bed", "disco", "phone", "bedDisco", "bed", "phone"],
+    loadingText: "Crossing the campus quad"
   },
   {
     id: 2,
-    title: "Dorm Detour",
-    subtitle: "Windows, laundry lines, tighter mixed decisions",
+    title: "Hallway Hustle",
+    subtitle: "Lockers, posters, and tighter mixed decisions",
     speed: 6.1,
-    length: 4200,
-    spacing: 480,
+    length: 6200,
+    spacing: 740,
     palette: {
       skyTop: "#75b8f8",
       skyBottom: "#d2e6ff",
@@ -79,16 +79,16 @@ const WEEK_CONFIGS = [
       groundShadow: "#743b35",
       accent: "#ffe06b"
     },
-    patterns: ["phone", "bedDisco", "doubleBed", "discoPhone", "bed", "discoBed"],
-    loadingText: "Checking dorm alarms"
+    patterns: ["phone", "bed", "disco", "phoneBed", "doubleBed", "disco"],
+    loadingText: "Finding the next lecture hall"
   },
   {
     id: 3,
-    title: "Nightlife Shortcut",
-    subtitle: "Neon signs, hanging hazards, fewer empty beats",
+    title: "Cafeteria Chaos",
+    subtitle: "Tray lines, vending glow, and louder distractions",
     speed: 6.9,
-    length: 4550,
-    spacing: 450,
+    length: 6900,
+    spacing: 720,
     palette: {
       skyTop: "#244c8f",
       skyBottom: "#5b9fd8",
@@ -99,16 +99,16 @@ const WEEK_CONFIGS = [
       groundShadow: "#2c2635",
       accent: "#ffcf4a"
     },
-    patterns: ["disco", "bedDisco", "phoneDisco", "discoBed", "doublePhone", "bedPhoneDisco"],
-    loadingText: "Dodging weekend plans"
+    patterns: ["disco", "phone", "bedDisco", "phone", "discoBed", "bed"],
+    loadingText: "Crossing the student commons"
   },
   {
     id: 4,
-    title: "Library Crush",
-    subtitle: "Tall academic blocks and denser obstacle chains",
+    title: "Library Stacks",
+    subtitle: "Shelves, desk lamps, and denser obstacle chains",
     speed: 7.8,
-    length: 4900,
-    spacing: 420,
+    length: 7600,
+    spacing: 700,
     palette: {
       skyTop: "#8fc7ff",
       skyBottom: "#d7ebff",
@@ -119,16 +119,16 @@ const WEEK_CONFIGS = [
       groundShadow: "#59513e",
       accent: "#f3c94a"
     },
-    patterns: ["phoneBed", "bedDisco", "discoPhone", "doubleBed", "phoneDisco", "bedPhoneDisco"],
-    loadingText: "Finding a quiet desk"
+    patterns: ["phoneBed", "bed", "disco", "phoneDisco", "bed", "doubleBed"],
+    loadingText: "Looking for a silent corner"
   },
   {
     id: 5,
-    title: "Final Sprint",
-    subtitle: "Fastest route, highest stakes, classroom in sight",
+    title: "OZU Final Hall",
+    subtitle: "Banners, exam doors, and the classroom in sight",
     speed: 8.8,
-    length: 5350,
-    spacing: 390,
+    length: 8400,
+    spacing: 680,
     palette: {
       skyTop: "#5ca8ff",
       skyBottom: "#ffd37a",
@@ -139,8 +139,8 @@ const WEEK_CONFIGS = [
       groundShadow: "#6b442d",
       accent: "#ffef74"
     },
-    patterns: ["bedDisco", "phoneDisco", "discoBed", "bedPhoneDisco", "doublePhone", "finalMix"],
-    loadingText: "Running toward finals"
+    patterns: ["bedDisco", "phone", "disco", "phoneDisco", "bed", "finalMix"],
+    loadingText: "Marching toward finals"
   }
 ];
 
@@ -174,42 +174,42 @@ const PATTERN_LIBRARY = {
   phone: [{ type: "phone", offset: 0 }],
   bedDisco: [
     { type: "bed", offset: 0 },
-    { type: "disco", offset: 235 }
+    { type: "disco", offset: 335 }
   ],
   discoBed: [
     { type: "disco", offset: 0 },
-    { type: "bed", offset: 250 }
+    { type: "bed", offset: 360 }
   ],
   phoneBed: [
     { type: "phone", offset: 0 },
-    { type: "bed", offset: 225 }
+    { type: "bed", offset: 345 }
   ],
   discoPhone: [
     { type: "disco", offset: 0 },
-    { type: "phone", offset: 235 }
+    { type: "phone", offset: 355 }
   ],
   phoneDisco: [
     { type: "phone", offset: 0 },
-    { type: "disco", offset: 245 }
+    { type: "disco", offset: 360 }
   ],
   doubleBed: [
     { type: "bed", offset: 0 },
-    { type: "bed", offset: 250 }
+    { type: "bed", offset: 380 }
   ],
   doublePhone: [
     { type: "phone", offset: 0 },
-    { type: "phone", offset: 245 }
+    { type: "phone", offset: 360 }
   ],
   bedPhoneDisco: [
     { type: "bed", offset: 0 },
-    { type: "phone", offset: 230 },
-    { type: "disco", offset: 485 }
+    { type: "phone", offset: 360 },
+    { type: "disco", offset: 735 }
   ],
   finalMix: [
     { type: "disco", offset: 0 },
-    { type: "bed", offset: 220 },
-    { type: "phone", offset: 450 },
-    { type: "disco", offset: 690 }
+    { type: "bed", offset: 350 },
+    { type: "phone", offset: 735 },
+    { type: "disco", offset: 1110 }
   ]
 };
 

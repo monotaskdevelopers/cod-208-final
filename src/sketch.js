@@ -74,6 +74,17 @@ function drawPixelText(label, positionX, positionY, size, fillColor, alignMode =
   pop();
 }
 
+function drawFlatPixelText(label, positionX, positionY, size, fillColor, alignMode = LEFT, verticalAlign = BASELINE) {
+  push();
+  textAlign(alignMode, verticalAlign);
+  textSize(size);
+  textStyle(BOLD);
+  noStroke();
+  fill(fillColor);
+  text(label, positionX, positionY);
+  pop();
+}
+
 function drawPanel(positionX, positionY, panelWidth, panelHeight, fillColor = COLORS.panel) {
   push();
   stroke(COLORS.ink);
@@ -425,42 +436,48 @@ class Game {
   }
 
   renderTitle() {
-    drawSkyGradient("#4c9dff", "#102a5c");
-    drawTitleLandscape(frameCount * 0.4);
-    drawPanel(270, 98, 740, 330, "#101624");
-    drawPixelText("THE LAST", 386, 205, 64, COLORS.paper, LEFT);
-    drawPixelText("SEMESTER", 335, 286, 76, COLORS.gold, LEFT);
-    drawPixelText("5 WEEKS TO GRADUATION", 442, 362, 24, "#8fd7ff", LEFT);
+    drawTitleClassroomBackdrop(frameCount * 0.8);
+    drawBlackboard(210, 76, 860, 356);
+    drawPixelText("THE LAST", 640, 202, 64, COLORS.paper, CENTER);
+    drawPixelText("SEMESTER", 640, 288, 76, COLORS.gold, CENTER);
+    drawPixelText("5 WEEKS TO GRADUATION", 640, 360, 24, "#8fd7ff", CENTER);
     const pulseOffset = Math.sin(this.titlePulse) * 5;
     drawPixelButton(490, 485 + pulseOffset, 300, 64, "START", false);
     this.addHotspot("start", 490, 470, 300, 92, () => {
       this.audio.menu();
       this.setState("difficulty-select");
     });
-    drawPixelText("UP: JUMP    DOWN: CROUCH    ENTER: CONFIRM", 330, 640, 22, COLORS.paper, LEFT);
+    drawPixelText("UP: JUMP    DOWN: CROUCH    ENTER: CONFIRM", 640, 646, 22, COLORS.paper, CENTER);
   }
 
   renderDifficultySelect() {
     drawMenuBackdrop("#5fa8ff", "#183b73");
+    noStroke();
+    fill(17, 24, 39, 150);
+    rect(226, 82, 828, 126, 4);
     drawPixelText("CHOOSE GRADUATION TARGET", 285, 118, 42, COLORS.gold, LEFT);
     drawPixelText("Credits can drop during the commute. Quizzes earn them back.", 287, 166, 22, COLORS.paper, LEFT);
+    const cardWidth = 280;
+    const cardHeight = 286;
+    const cardGap = 30;
+    const cardsStartX = (CANVAS_WIDTH - cardWidth * DIFFICULTIES.length - cardGap * (DIFFICULTIES.length - 1)) / 2;
+    const cardY = 220;
     for (let difficultyIndex = 0; difficultyIndex < DIFFICULTIES.length; difficultyIndex += 1) {
       const difficulty = DIFFICULTIES[difficultyIndex];
-      const cardX = 210 + difficultyIndex * 300;
-      const cardY = 250;
+      const cardX = cardsStartX + difficultyIndex * (cardWidth + cardGap);
       const isSelected = this.selectedDifficulty.id === difficulty.id;
-      drawPanel(cardX, cardY, 260, 230, isSelected ? "#3c4f7e" : "#202b45");
-      drawPixelText(difficulty.label.toUpperCase(), cardX + 42, cardY + 64, 30, isSelected ? COLORS.gold : COLORS.paper, LEFT);
-      drawPixelText(`${difficulty.targetCredits} CREDITS`, cardX + 42, cardY + 112, 24, "#8fd7ff", LEFT);
-      drawWrappedText(difficulty.description, cardX + 42, cardY + 145, 178, 24, 17, COLORS.paper, LEFT);
-      drawPixelButton(cardX + 42, cardY + 175, 176, 46, `${difficultyIndex + 1}`, isSelected);
-      this.addHotspot(`difficulty-${difficulty.id}`, cardX, cardY, 260, 230, () => {
+      drawPanel(cardX, cardY, cardWidth, cardHeight, isSelected ? "#3c4f7e" : "#202b45");
+      drawPixelText(difficulty.label.toUpperCase(), cardX + 40, cardY + 64, 30, isSelected ? COLORS.gold : COLORS.paper, LEFT);
+      drawPixelText(`${difficulty.targetCredits} CREDITS`, cardX + 40, cardY + 112, 24, "#8fd7ff", LEFT);
+      drawWrappedText(difficulty.description, cardX + 40, cardY + 150, cardWidth - 80, 27, 18, COLORS.paper, LEFT);
+      drawPixelButton(cardX + 42, cardY + 218, cardWidth - 84, 50, `${difficultyIndex + 1}`, isSelected);
+      this.addHotspot(`difficulty-${difficulty.id}`, cardX, cardY, cardWidth, cardHeight, () => {
         this.selectedDifficulty = difficulty;
         this.audio.menu();
       });
     }
-    drawPixelButton(470, 545, 340, 62, "BEGIN", true);
-    this.addHotspot("begin-run", 470, 545, 340, 62, () => {
+    drawPixelButton(470, 582, 340, 62, "BEGIN", true);
+    this.addHotspot("begin-run", 470, 582, 340, 62, () => {
       this.audio.menu();
       this.startNewRun();
     });
@@ -481,12 +498,10 @@ class Game {
 
   renderLoading() {
     const progress = this.loading ? this.loading.frame / this.loading.durationFrames : 1;
-    drawSkyGradient("#244c8f", "#0d1430");
-    drawLoadingPlatform(progress);
-    drawPanel(310, 220, 660, 250, "#121a2c");
-    drawPixelText("LOADING", 516, 294, 44, COLORS.gold, LEFT);
-    drawPixelText(this.loading ? this.loading.label.toUpperCase() : "READY", 384, 350, 23, COLORS.paper, LEFT);
-    drawProgressBar(392, 390, 496, 34, progress, COLORS.green);
+    drawLoadingStudyScene(progress);
+    drawPixelText("OPENING COURSE BOOK", 640, 120, 38, COLORS.gold, CENTER);
+    drawWrappedText(this.loading ? this.loading.label.toUpperCase() : "READY", 640, 162, 620, 28, 22, COLORS.paper, CENTER);
+    drawProgressBar(392, 612, 496, 34, progress, COLORS.green);
   }
 
   renderWeekIntro() {
@@ -539,20 +554,15 @@ class Game {
   }
 
   renderEnding(succeeded) {
-    drawMenuBackdrop(succeeded ? "#6da9ff" : "#31384a", succeeded ? "#183b73" : "#111827");
-    if (succeeded) {
-      drawDiplomaScene(frameCount);
-      drawPanel(284, 86, 712, 200, "#14213a");
-      drawPixelText("GRADUATED", 440, 168, 62, COLORS.gold, LEFT);
-      drawPixelText(`${this.totalCredits} / ${this.selectedDifficulty.targetCredits} CREDITS`, 434, 230, 27, COLORS.paper, LEFT);
-    } else {
-      drawFailDeskScene();
-      drawPanel(256, 88, 768, 220, "#201b2a");
-      drawPixelText("SEMESTER MISSED", 354, 168, 52, COLORS.red, LEFT);
-      drawPixelText(`${this.totalCredits} / ${this.selectedDifficulty.targetCredits} CREDITS`, 434, 238, 27, COLORS.paper, LEFT);
-    }
-    drawPixelButton(468, 610, 344, 58, "PLAY AGAIN", true);
-    this.addHotspot("replay", 468, 610, 344, 58, () => {
+    drawEndingBackdrop(succeeded, frameCount);
+    drawDiplomaDocument(248, 72, 784, 504, succeeded, this.totalCredits, this.selectedDifficulty.targetCredits, this.selectedDifficulty.label);
+    drawPixelButton(344, 616, 264, 58, succeeded ? "NEW RUN" : "RETRY", true);
+    this.addHotspot("ending-retry", 344, 616, 264, 58, () => {
+      this.audio.menu();
+      this.startNewRun();
+    });
+    drawPixelButton(672, 616, 264, 58, "MAIN MENU", false);
+    this.addHotspot("ending-menu", 672, 616, 264, 58, () => {
       this.audio.menu();
       this.resetRunValues();
       this.setState("title");
@@ -580,8 +590,7 @@ class Game {
       this.advanceFromSummary();
       this.audio.menu();
     } else if (this.state === "ending-success" || this.state === "ending-fail") {
-      this.resetRunValues();
-      this.setState("title");
+      this.startNewRun();
       this.audio.menu();
     }
   }
@@ -740,11 +749,17 @@ class LevelManager {
     while (worldX < this.weekConfig.length - 600) {
       const patternName = this.weekConfig.patterns[patternIndex % this.weekConfig.patterns.length];
       const pattern = PATTERN_LIBRARY[patternName];
+      let patternSpan = 0;
       for (let obstacleIndex = 0; obstacleIndex < pattern.length; obstacleIndex += 1) {
         const entry = pattern[obstacleIndex];
-        obstacles.push(new Obstacle(entry.type, worldX + entry.offset));
+        const obstacleWorldX = worldX + entry.offset;
+        if (obstacleWorldX < this.weekConfig.length - 500) {
+          obstacles.push(new Obstacle(entry.type, obstacleWorldX));
+        }
+        patternSpan = Math.max(patternSpan, entry.offset);
       }
-      worldX += this.weekConfig.spacing + (patternIndex % 2) * 45;
+      const recoveryGap = pattern.length > 1 ? 140 : 0;
+      worldX += patternSpan + this.weekConfig.spacing + recoveryGap + (patternIndex % 3) * 65;
       patternIndex += 1;
     }
     return obstacles;
@@ -769,7 +784,7 @@ class LevelManager {
 
   render() {
     drawWeekBackground(this.weekConfig, this.scroll);
-    drawGround(this.weekConfig.palette, this.scroll);
+    drawWeekGround(this.weekConfig, this.scroll);
     for (let obstacleIndex = 0; obstacleIndex < this.obstacles.length; obstacleIndex += 1) {
       this.obstacles[obstacleIndex].render(this.scroll, this.weekConfig.palette);
     }
@@ -963,6 +978,103 @@ function drawMenuBackdrop(topColor, bottomColor) {
   drawClouds(frameCount * 0.2);
 }
 
+function drawTitleClassroomBackdrop(scroll) {
+  background("#d7e4ef");
+  noStroke();
+  fill("#91aeca");
+  rect(0, 0, CANVAS_WIDTH, 160);
+  fill("#b7c7d8");
+  for (let windowIndex = 0; windowIndex < 5; windowIndex += 1) {
+    const windowX = 74 + windowIndex * 258;
+    rect(windowX, 34, 130, 86, 2);
+    fill("#f4f1e8");
+    rect(windowX + 61, 34, 6, 86);
+    rect(windowX, 74, 130, 6);
+    fill("#b7c7d8");
+  }
+  fill("#c78b4b");
+  rect(0, 534, CANVAS_WIDTH, 186);
+  fill("#8a5b2f");
+  for (let boardIndex = 0; boardIndex < 12; boardIndex += 1) {
+    rect(boardIndex * 126 - (scroll * 0.2) % 126, 588, 92, 12);
+    rect(boardIndex * 126 + 48 - (scroll * 0.2) % 126, 652, 74, 10);
+  }
+  fill("#a36a3c");
+  for (let deskIndex = 0; deskIndex < 6; deskIndex += 1) {
+    const deskX = 64 + deskIndex * 224 - (scroll * 0.12) % 224;
+    rect(deskX, 530, 140, 42, 2);
+    rect(deskX + 12, 572, 18, 92);
+    rect(deskX + 108, 572, 18, 92);
+  }
+  drawFlyingPapers(scroll);
+}
+
+function drawBlackboard(positionX, positionY, boardWidth, boardHeight) {
+  push();
+  stroke(COLORS.ink);
+  strokeWeight(6);
+  fill("#9d6536");
+  rect(positionX, positionY, boardWidth, boardHeight, 4);
+  fill("#234f3e");
+  rect(positionX + 22, positionY + 22, boardWidth - 44, boardHeight - 54, 2);
+  noStroke();
+  fill("#f4f1e8");
+  rect(positionX + 60, positionY + boardHeight - 24, 190, 8, 1);
+  fill("#d94a4a");
+  rect(positionX + boardWidth - 210, positionY + boardHeight - 34, 132, 18, 2);
+  fill(255, 255, 255, 35);
+  for (let chalkIndex = 0; chalkIndex < 7; chalkIndex += 1) {
+    rect(positionX + 86 + chalkIndex * 112, positionY + 58 + (chalkIndex % 3) * 48, 58, 5, 2);
+  }
+  pop();
+}
+
+function drawFlyingPapers(scroll) {
+  for (let paperIndex = 0; paperIndex < 12; paperIndex += 1) {
+    const driftSpeed = 1.15 + (paperIndex % 4) * 0.22;
+    const paperX = ((paperIndex * 173 + scroll * driftSpeed) % (CANVAS_WIDTH + 180)) - 90;
+    const paperY = 96 + (paperIndex % 5) * 72 + Math.sin(scroll * 0.035 + paperIndex) * 14;
+    const paperScale = 0.72 + (paperIndex % 3) * 0.16;
+    const angle = Math.sin(scroll * 0.025 + paperIndex * 1.7) * 0.18;
+    if (paperIndex % 3 === 0) {
+      drawPaperPlane(paperX, paperY, paperScale, angle);
+    } else {
+      drawLoosePaper(paperX, paperY, paperScale, angle);
+    }
+  }
+}
+
+function drawPaperPlane(positionX, positionY, scaleAmount, angle) {
+  push();
+  translate(positionX, positionY);
+  rotate(angle);
+  scale(scaleAmount);
+  stroke(COLORS.ink);
+  strokeWeight(3);
+  fill("#f4f1e8");
+  triangle(-30, -10, 34, 0, -28, 18);
+  fill("#d7e4ef");
+  triangle(-28, -9, 4, 3, -12, 10);
+  line(4, 3, -18, 17);
+  pop();
+}
+
+function drawLoosePaper(positionX, positionY, scaleAmount, angle) {
+  push();
+  translate(positionX, positionY);
+  rotate(angle);
+  scale(scaleAmount);
+  stroke(COLORS.ink);
+  strokeWeight(3);
+  fill("#f4f1e8");
+  rect(-22, -16, 44, 34, 2);
+  stroke("#8fd7ff");
+  strokeWeight(2);
+  line(-12, -5, 12, -5);
+  line(-12, 5, 8, 5);
+  pop();
+}
+
 function drawTitleLandscape(scroll) {
   drawClouds(scroll * 0.18);
   noStroke();
@@ -982,21 +1094,25 @@ function drawTitleLandscape(scroll) {
 
 function drawEnvironmentPreview(weekConfig, scroll) {
   drawWeekBackground(weekConfig, scroll);
-  drawGround(weekConfig.palette, scroll);
+  drawWeekGround(weekConfig, scroll);
 }
 
 function drawWeekBackground(weekConfig, scroll) {
-  drawSkyGradient(weekConfig.palette.skyTop, weekConfig.palette.skyBottom);
-  drawClouds(scroll * 0.16);
   if (weekConfig.id === 1) {
+    drawSkyGradient(weekConfig.palette.skyTop, weekConfig.palette.skyBottom);
+    drawClouds(scroll * 0.16);
     drawCampusLayer(scroll, weekConfig.palette);
   } else if (weekConfig.id === 2) {
+    background("#d9e2ec");
     drawDormLayer(scroll, weekConfig.palette);
   } else if (weekConfig.id === 3) {
+    background("#e9c7a7");
     drawNightlifeLayer(scroll, weekConfig.palette);
   } else if (weekConfig.id === 4) {
+    background("#dfd8c4");
     drawLibraryLayer(scroll, weekConfig.palette);
   } else {
+    background("#d9dfeb");
     drawFinalLayer(scroll, weekConfig.palette);
   }
 }
@@ -1018,88 +1134,299 @@ function drawCampusLayer(scroll, palette) {
   fill(palette.far);
   for (let hillIndex = 0; hillIndex < 5; hillIndex += 1) {
     const hillX = hillIndex * 360 - (scroll * 0.08) % 360;
-    ellipse(hillX + 180, 500, 420, 160);
+    ellipse(hillX + 180, 470, 420, 190);
   }
-  fill("#e9dcb7");
-  for (let archIndex = 0; archIndex < 4; archIndex += 1) {
-    const archX = archIndex * 420 - (scroll * 0.2) % 420;
-    rect(archX + 70, 340, 180, 150);
-    fill("#5476a2");
-    rect(archX + 118, 396, 84, 94, 40);
-    fill("#e9dcb7");
-    triangle(archX + 52, 340, archX + 160, 285, archX + 270, 340);
+  fill("#e9ddc3");
+  for (let buildingIndex = 0; buildingIndex < 5; buildingIndex += 1) {
+    const buildingX = buildingIndex * 320 - (scroll * 0.18) % 320;
+    rect(buildingX + 30, 258, 210, 228);
+    fill("#c3a46d");
+    rect(buildingX + 18, 244, 236, 22);
+    fill("#5f7697");
+    for (let windowX = buildingX + 56; windowX < buildingX + 216; windowX += 46) {
+      for (let windowY = 292; windowY < 418; windowY += 42) {
+        rect(windowX, windowY, 24, 28, 2);
+      }
+    }
+    fill("#7f5634");
+    rect(buildingX + 112, 372, 46, 114, 3);
+    fill(palette.accent);
+    rect(buildingX + 74, 212, 118, 26, 3);
+    drawFlatPixelText("OZU", buildingX + 133, 231, 17, COLORS.ink, CENTER);
+    fill("#e9ddc3");
+  }
+  fill("#4b7f52");
+  for (let treeIndex = 0; treeIndex < 8; treeIndex += 1) {
+    const treeX = treeIndex * 170 - (scroll * 0.28) % 170;
+    rect(treeX + 72, 404, 14, 82);
+    ellipse(treeX + 78, 374, 74, 74);
+  }
+  fill("#f4f1e8");
+  for (let lampIndex = 0; lampIndex < 7; lampIndex += 1) {
+    const lampX = lampIndex * 190 - (scroll * 0.34) % 190;
+    rect(lampX + 94, 320, 8, 138);
+    rect(lampX + 80, 320, 36, 16, 2);
   }
 }
 
 function drawDormLayer(scroll, palette) {
   noStroke();
-  for (let buildingIndex = 0; buildingIndex < 6; buildingIndex += 1) {
-    const buildingX = buildingIndex * 300 - (scroll * 0.18) % 300;
-    fill(buildingIndex % 2 === 0 ? "#8a6c7b" : "#6d7ea6");
-    rect(buildingX, 236, 220, 270);
-    fill("#ffe6a0");
-    for (let windowX = buildingX + 28; windowX < buildingX + 190; windowX += 54) {
-      for (let windowY = 268; windowY < 455; windowY += 52) {
-        rect(windowX, windowY, 28, 26);
-      }
-    }
-    fill(palette.accent);
-    rect(buildingX + 18, 502, 180, 8);
+  fill("#bcc8d6");
+  rect(0, 0, CANVAS_WIDTH, 150);
+  fill("#edf0e8");
+  rect(0, 150, CANVAS_WIDTH, 400);
+  fill("#8ea3bb");
+  for (let lightIndex = 0; lightIndex < 6; lightIndex += 1) {
+    rect(72 + lightIndex * 210, 50, 126, 24, 3);
+    fill("#f4f1e8");
+    rect(80 + lightIndex * 210, 58, 110, 10, 2);
+    fill("#8ea3bb");
+  }
+  for (let lockerIndex = 0; lockerIndex < 7; lockerIndex += 1) {
+    const lockerX = lockerIndex * 200 - (scroll * 0.18) % 200;
+    fill(lockerIndex % 2 === 0 ? "#7087a8" : "#8ca0bc");
+    rect(lockerX + 8, 248, 152, 238, 4);
+    fill("#61758f");
+    rect(lockerX + 56, 248, 6, 238);
+    rect(lockerX + 104, 248, 6, 238);
+    fill("#d6dde7");
+    rect(lockerX + 44, 310, 8, 28, 2);
+    rect(lockerX + 92, 310, 8, 28, 2);
+    rect(lockerX + 140, 310, 8, 28, 2);
+  }
+  for (let posterIndex = 0; posterIndex < 5; posterIndex += 1) {
+    const posterX = posterIndex * 290 - (scroll * 0.24) % 290;
+    fill(posterIndex % 2 === 0 ? palette.accent : "#d94a4a");
+    rect(posterX + 110, 174, 112, 58, 3);
+    drawFlatPixelText(posterIndex % 2 === 0 ? "OZU" : "WEEK", posterX + 166, 210, 18, COLORS.ink, CENTER);
+  }
+  fill("#4e637d");
+  for (let doorwayIndex = 0; doorwayIndex < 5; doorwayIndex += 1) {
+    const doorwayX = doorwayIndex * 260 - (scroll * 0.12) % 260;
+    rect(doorwayX + 152, 276, 86, 210, 3);
+    fill("#dce5ef");
+    rect(doorwayX + 172, 304, 44, 68, 2);
+    fill("#4e637d");
   }
 }
 
 function drawNightlifeLayer(scroll, palette) {
   noStroke();
-  fill("#183145");
-  for (let blockIndex = 0; blockIndex < 7; blockIndex += 1) {
-    const blockX = blockIndex * 250 - (scroll * 0.18) % 250;
-    rect(blockX, 300 - (blockIndex % 3) * 22, 170, 230);
-    fill(blockIndex % 2 === 0 ? "#ffcf4a" : "#e65a65");
-    rect(blockX + 22, 328, 84, 22);
-    rect(blockX + 26, 384, 24, 18);
-    rect(blockX + 74, 420, 24, 18);
-    fill("#183145");
+  fill("#bc8f6c");
+  rect(0, 0, CANVAS_WIDTH, 114);
+  for (let windowIndex = 0; windowIndex < 5; windowIndex += 1) {
+    const windowX = 48 + windowIndex * 246;
+    for (let row = 0; row < 90; row += 4) {
+      const amount = row / 90;
+      fill(lerpColor(color("#88b8ff"), color("#f7c675"), amount));
+      rect(windowX, 42 + row, 156, 4);
+    }
+    fill(255, 255, 255, 64);
+    rect(windowX, 42, 156, 90, 3);
+    fill("#f4f1e8");
+    rect(windowX - 6, 34, 168, 8, 2);
+    rect(windowX - 6, 132, 168, 8, 2);
+    rect(windowX - 6, 42, 8, 90, 2);
+    rect(windowX + 154, 42, 8, 90, 2);
   }
-  fill("#46c2a4");
-  for (let signIndex = 0; signIndex < 4; signIndex += 1) {
-    const signX = signIndex * 360 + 120 - (scroll * 0.32) % 360;
-    rect(signX, 238, 108, 34, 2);
+  fill("#f0d2af");
+  rect(0, 132, CANVAS_WIDTH, 400);
+  fill("#7f4c2b");
+  for (let boardIndex = 0; boardIndex < 4; boardIndex += 1) {
+    const boardX = boardIndex * 320 - (scroll * 0.14) % 320;
+    rect(boardX + 54, 176, 120, 44, 3);
+    fill(palette.accent);
+    rect(boardX + 66, 186, 96, 22, 2);
+    drawFlatPixelText("OZU CAFE", boardX + 114, 202, 16, COLORS.ink, CENTER);
+    fill("#7f4c2b");
+  }
+  fill("#4b6186");
+  for (let vendingIndex = 0; vendingIndex < 5; vendingIndex += 1) {
+    const vendingX = vendingIndex * 256 - (scroll * 0.22) % 256;
+    rect(vendingX + 8, 248, 74, 188, 3);
+    fill("#d4e7ff");
+    rect(vendingX + 22, 266, 46, 62, 2);
+    fill("#d94a4a");
+    rect(vendingX + 22, 344, 46, 30, 2);
+    fill("#4b6186");
+  }
+  fill("#9d6536");
+  for (let tableIndex = 0; tableIndex < 7; tableIndex += 1) {
+    const tableX = tableIndex * 196 - (scroll * 0.34) % 196;
+    rect(tableX + 26, 420, 132, 18, 2);
+    rect(tableX + 40, 438, 12, 54);
+    rect(tableX + 132, 438, 12, 54);
+    fill("#50657f");
+    rect(tableX + 12, 450, 26, 40, 2);
+    rect(tableX + 146, 450, 26, 40, 2);
+    fill("#9d6536");
+  }
+  fill("#ffe7b8");
+  for (let lampIndex = 0; lampIndex < 6; lampIndex += 1) {
+    const lampX = lampIndex * 214 - (scroll * 0.12) % 214;
+    rect(lampX + 98, 130, 8, 68);
+    ellipse(lampX + 102, 204, 44, 26);
   }
 }
 
 function drawLibraryLayer(scroll, palette) {
   noStroke();
-  fill("#d4d0bd");
-  for (let libraryIndex = 0; libraryIndex < 4; libraryIndex += 1) {
-    const libraryX = libraryIndex * 430 - (scroll * 0.16) % 430;
-    rect(libraryX + 40, 285, 300, 220);
-    fill("#7d8790");
-    for (let columnIndex = 0; columnIndex < 5; columnIndex += 1) {
-      rect(libraryX + 72 + columnIndex * 50, 326, 24, 178);
-    }
-    fill("#d4d0bd");
-    triangle(libraryX + 28, 285, libraryX + 190, 218, libraryX + 352, 285);
+  fill("#c7b79e");
+  rect(0, 0, CANVAS_WIDTH, 132);
+  fill("#efe8d5");
+  rect(0, 132, CANVAS_WIDTH, 420);
+  fill("#e5d39a");
+  for (let lightIndex = 0; lightIndex < 5; lightIndex += 1) {
+    rect(100 + lightIndex * 240, 62, 112, 18, 3);
   }
+  for (let shelfIndex = 0; shelfIndex < 6; shelfIndex += 1) {
+    const shelfX = shelfIndex * 220 - (scroll * 0.18) % 220;
+    fill("#7b5b40");
+    rect(shelfX + 16, 214, 172, 292, 3);
+    fill("#5b422d");
+    rect(shelfX + 16, 282, 172, 8);
+    rect(shelfX + 16, 350, 172, 8);
+    rect(shelfX + 16, 418, 172, 8);
+    for (let bookColumn = 0; bookColumn < 7; bookColumn += 1) {
+      const colorSet = ["#d94a4a", "#4c6aa4", "#f3c94a", "#56a86c"];
+      fill(colorSet[(shelfIndex + bookColumn) % colorSet.length]);
+      rect(shelfX + 26 + bookColumn * 22, 226, 16, 44, 1);
+      rect(shelfX + 26 + bookColumn * 22, 294, 16, 44, 1);
+      rect(shelfX + 26 + bookColumn * 22, 362, 16, 44, 1);
+    }
+  }
+  fill("#9a7b54");
+  for (let deskIndex = 0; deskIndex < 4; deskIndex += 1) {
+    const deskX = deskIndex * 320 - (scroll * 0.28) % 320;
+    rect(deskX + 42, 420, 180, 24, 2);
+    rect(deskX + 60, 444, 14, 54);
+    rect(deskX + 190, 444, 14, 54);
+    fill("#f0e08f");
+    rect(deskX + 112, 372, 12, 54);
+    ellipse(deskX + 118, 366, 52, 26);
+    fill("#9a7b54");
+  }
+  fill(palette.accent);
+  rect(494, 160, 292, 34, 3);
+  drawFlatPixelText("OZU LIBRARY", 640, 184, 20, COLORS.ink, CENTER);
 }
 
 function drawFinalLayer(scroll, palette) {
   noStroke();
-  fill("#325d73");
-  for (let gateIndex = 0; gateIndex < 4; gateIndex += 1) {
-    const gateX = gateIndex * 430 - (scroll * 0.18) % 430;
-    rect(gateX + 52, 340, 40, 170);
-    rect(gateX + 268, 340, 40, 170);
-    rect(gateX + 52, 340, 256, 24);
-    fill(palette.accent);
-    rect(gateX + 106, 292, 150, 42, 3);
-    fill("#325d73");
+  fill("#c3cedb");
+  rect(0, 0, CANVAS_WIDTH, 118);
+  fill("#eef2f7");
+  rect(0, 118, CANVAS_WIDTH, 434);
+  fill("#9cb0c6");
+  for (let lightIndex = 0; lightIndex < 6; lightIndex += 1) {
+    rect(84 + lightIndex * 206, 44, 118, 24, 3);
+    fill("#f4f1e8");
+    rect(94 + lightIndex * 206, 52, 98, 12, 2);
+    fill("#9cb0c6");
   }
-  fill("#ffffff");
-  for (let sparkleIndex = 0; sparkleIndex < 18; sparkleIndex += 1) {
-    const sparkleX = (sparkleIndex * 82 + frameCount * 0.8) % CANVAS_WIDTH;
-    const sparkleY = 105 + (sparkleIndex % 5) * 42;
-    rect(sparkleX, sparkleY, 8, 8);
+  for (let bannerIndex = 0; bannerIndex < 5; bannerIndex += 1) {
+    const bannerX = bannerIndex * 280 - (scroll * 0.14) % 280;
+    fill(bannerIndex % 2 === 0 ? palette.accent : "#d94a4a");
+    rect(bannerX + 48, 144, 154, 54, 4);
+    drawFlatPixelText(bannerIndex % 2 === 0 ? "OZU" : "FINALS", bannerX + 125, 178, 18, COLORS.ink, CENTER);
   }
+  fill("#607693");
+  for (let doorIndex = 0; doorIndex < 6; doorIndex += 1) {
+    const doorX = doorIndex * 214 - (scroll * 0.22) % 214;
+    rect(doorX + 18, 244, 86, 242, 3);
+    rect(doorX + 120, 244, 86, 242, 3);
+    fill("#dbe7f3");
+    rect(doorX + 42, 278, 38, 64, 2);
+    rect(doorX + 144, 278, 38, 64, 2);
+    fill("#607693");
+    rect(doorX + 72, 352, 10, 10, 2);
+    rect(doorX + 174, 352, 10, 10, 2);
+  }
+  fill("#7d90a8");
+  for (let arrowIndex = 0; arrowIndex < 7; arrowIndex += 1) {
+    const arrowX = arrowIndex * 180 - (scroll * 0.34) % 180;
+    triangle(arrowX + 48, 430, arrowX + 108, 462, arrowX + 48, 494);
+  }
+}
+
+function drawWeekGround(weekConfig, scroll) {
+  if (weekConfig.id === 1) {
+    drawGround(weekConfig.palette, scroll);
+    return;
+  }
+  if (weekConfig.id === 2) {
+    drawHallwayGround(weekConfig.palette, scroll);
+    return;
+  }
+  if (weekConfig.id === 3) {
+    drawCommonsGround(weekConfig.palette, scroll);
+    return;
+  }
+  if (weekConfig.id === 4) {
+    drawLibraryGround(weekConfig.palette, scroll);
+    return;
+  }
+  drawFinalHallGround(weekConfig.palette, scroll);
+}
+
+function drawHallwayGround(palette, scroll) {
+  noStroke();
+  fill("#3b556f");
+  rect(0, GROUND_Y, CANVAS_WIDTH, 20);
+  fill("#d3d7dd");
+  rect(0, GROUND_Y + 20, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y - 20);
+  fill("#c4c9d1");
+  for (let tileX = -64 - (scroll % 64); tileX < CANVAS_WIDTH + 80; tileX += 64) {
+    rect(tileX, GROUND_Y + 48, 58, 10);
+    rect(tileX + 12, GROUND_Y + 108, 42, 8);
+  }
+  fill(palette.accent);
+  rect(0, GROUND_Y + 34, CANVAS_WIDTH, 10);
+}
+
+function drawCommonsGround(palette, scroll) {
+  noStroke();
+  fill("#5f4a39");
+  rect(0, GROUND_Y, CANVAS_WIDTH, 20);
+  fill("#d5b18e");
+  rect(0, GROUND_Y + 20, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y - 20);
+  fill("#c58f69");
+  for (let tileX = -52 - (scroll % 52); tileX < CANVAS_WIDTH + 60; tileX += 52) {
+    rect(tileX, GROUND_Y + 44, 44, 12);
+    rect(tileX + 18, GROUND_Y + 104, 28, 10);
+  }
+  fill("#a85239");
+  rect(0, GROUND_Y + 80, CANVAS_WIDTH, 8);
+}
+
+function drawLibraryGround(palette, scroll) {
+  noStroke();
+  fill("#4d664f");
+  rect(0, GROUND_Y, CANVAS_WIDTH, 18);
+  fill("#8f6c4e");
+  rect(0, GROUND_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y - 18);
+  fill("#7b5b40");
+  for (let plankX = -76 - (scroll % 76); plankX < CANVAS_WIDTH + 80; plankX += 76) {
+    rect(plankX, GROUND_Y + 44, 64, 10);
+    rect(plankX + 22, GROUND_Y + 100, 42, 10);
+  }
+  fill(palette.accent);
+  rect(110, GROUND_Y + 32, CANVAS_WIDTH - 220, 14, 3);
+}
+
+function drawFinalHallGround(palette, scroll) {
+  noStroke();
+  fill("#3f5976");
+  rect(0, GROUND_Y, CANVAS_WIDTH, 18);
+  fill("#94a1b2");
+  rect(0, GROUND_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y - 18);
+  fill(palette.accent);
+  for (let markerX = -120 - (scroll % 120); markerX < CANVAS_WIDTH + 140; markerX += 120) {
+    triangle(markerX + 18, GROUND_Y + 74, markerX + 78, GROUND_Y + 98, markerX + 18, GROUND_Y + 122);
+  }
+  fill("#8491a4");
+  rect(0, GROUND_Y + 42, CANVAS_WIDTH, 8);
+  rect(0, GROUND_Y + 138, CANVAS_WIDTH, 8);
 }
 
 function drawGround(palette, scroll) {
@@ -1215,6 +1542,57 @@ function drawClassroomBackdrop() {
   }
 }
 
+function drawLoadingStudyScene(progress) {
+  drawClassroomBackdrop();
+  noStroke();
+  fill(13, 20, 39, 136);
+  rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  fill("#173d32");
+  rect(160, 68, 960, 176, 3);
+  drawFlyingPapers(frameCount * 0.95);
+  fill("#a86a3b");
+  rect(0, 468, CANVAS_WIDTH, 252);
+  fill("#6f4227");
+  for (let plankIndex = 0; plankIndex < 10; plankIndex += 1) {
+    rect(plankIndex * 148 - (frameCount * 0.3) % 148, 556, 118, 10);
+    rect(plankIndex * 148 + 52 - (frameCount * 0.3) % 148, 648, 86, 8);
+  }
+  drawLoadingBook(progress);
+}
+
+function drawLoadingBook(progress) {
+  const openAmount = Math.sin(clampValue(progress, 0, 1) * HALF_PI);
+  const pageLift = Math.sin(clampValue(progress, 0, 1) * PI);
+  push();
+  translate(640, 418);
+  stroke(COLORS.ink);
+  strokeWeight(6);
+  fill("#8f2f3d");
+  rect(-348, -56, 696, 236, 8);
+  fill("#5f2430");
+  rect(-24, -56, 48, 236, 2);
+  fill("#f4f1e8");
+  quad(-22, -124, -318 - openAmount * 10, -80, -318, 142, -22, 184);
+  quad(22, -124, 318 + openAmount * 10, -80, 318, 142, 22, 184);
+  stroke("#d2c6aa");
+  strokeWeight(3);
+  for (let lineIndex = 0; lineIndex < 6; lineIndex += 1) {
+    line(-260, -42 + lineIndex * 30, -66, -12 + lineIndex * 30);
+    line(68, -12 + lineIndex * 30, 260, -42 + lineIndex * 30);
+  }
+  stroke(COLORS.ink);
+  strokeWeight(5);
+  fill("#fff8dc");
+  const pageWidth = 38 + openAmount * 214;
+  quad(0, -118, pageWidth, -92 - pageLift * 26, pageWidth, 128 - pageLift * 16, 0, 178);
+  noStroke();
+  fill(COLORS.gold);
+  rect(20, 154, 38, 94, 2);
+  fill("#8fd7ff");
+  rect(-250 + progress * 500, 194 - pageLift * 28, 44, 18, 2);
+  pop();
+}
+
 function drawLoadingPlatform(progress) {
   noStroke();
   fill("#213d5f");
@@ -1226,6 +1604,77 @@ function drawLoadingPlatform(progress) {
   }
   fill(COLORS.gold);
   rect(160 + progress * 880, 450 - Math.sin(progress * PI) * 85, 32, 32, 2);
+}
+
+function drawEndingBackdrop(succeeded, sceneFrame) {
+  drawClassroomBackdrop();
+  noStroke();
+  fill(succeeded ? "#203f68" : "#211b2b");
+  rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  if (succeeded) {
+    for (let confettiIndex = 0; confettiIndex < 70; confettiIndex += 1) {
+      const confettiX = (confettiIndex * 71 + sceneFrame * (1 + confettiIndex % 4)) % CANVAS_WIDTH;
+      const confettiY = (confettiIndex * 43 + sceneFrame * 2) % CANVAS_HEIGHT;
+      fill(confettiIndex % 3 === 0 ? COLORS.gold : confettiIndex % 3 === 1 ? COLORS.red : COLORS.green);
+      rect(confettiX, confettiY, 10, 14);
+    }
+  } else {
+    fill(255, 255, 255, 28);
+    for (let paperIndex = 0; paperIndex < 16; paperIndex += 1) {
+      rect((paperIndex * 97 + sceneFrame * 0.6) % CANVAS_WIDTH, 70 + (paperIndex % 6) * 72, 42, 28, 2);
+    }
+  }
+}
+
+function drawDiplomaDocument(positionX, positionY, documentWidth, documentHeight, succeeded, totalCredits, targetCredits, difficultyLabel) {
+  push();
+  stroke(COLORS.ink);
+  strokeWeight(7);
+  fill("#dac496");
+  rect(positionX + 18, positionY + 22, documentWidth, documentHeight, 5);
+  fill("#f4f1e8");
+  rect(positionX, positionY, documentWidth, documentHeight, 5);
+  stroke(succeeded ? COLORS.gold : COLORS.red);
+  strokeWeight(5);
+  noFill();
+  rect(positionX + 28, positionY + 28, documentWidth - 56, documentHeight - 56, 2);
+  stroke(COLORS.ink);
+  strokeWeight(3);
+  line(positionX + 96, positionY + 200, positionX + documentWidth - 96, positionY + 200);
+  line(positionX + 150, positionY + 338, positionX + documentWidth - 150, positionY + 338);
+  pop();
+
+  drawFlatPixelText("OZU", positionX + documentWidth / 2, positionY + 96, 46, COLORS.ink, CENTER);
+  drawFlatPixelText("THE LAST SEMESTER", positionX + documentWidth / 2, positionY + 154, 34, succeeded ? COLORS.gold : COLORS.red, CENTER);
+  drawFlatPixelText(succeeded ? "DIPLOMA OF SURVIVAL" : "ACADEMIC WARNING", positionX + documentWidth / 2, positionY + 238, 30, COLORS.ink, CENTER);
+  drawFlatPixelText(`${totalCredits} / ${targetCredits} CREDITS`, positionX + documentWidth / 2, positionY + 292, 27, "#2e5fd6", CENTER);
+  drawFlatPixelText(`${difficultyLabel.toUpperCase()} TARGET`, positionX + documentWidth / 2, positionY + 386, 22, COLORS.ink, CENTER);
+  drawOzuSeal(positionX + 148, positionY + 382, succeeded);
+  drawStamp(positionX + documentWidth - 214, positionY + 386, succeeded);
+}
+
+function drawOzuSeal(positionX, positionY, succeeded) {
+  push();
+  stroke(COLORS.ink);
+  strokeWeight(5);
+  fill(succeeded ? COLORS.gold : "#b7becd");
+  ellipse(positionX, positionY, 104, 104);
+  fill("#f4f1e8");
+  ellipse(positionX, positionY, 70, 70);
+  drawFlatPixelText("OZU", positionX, positionY + 11, 22, COLORS.ink, CENTER);
+  pop();
+}
+
+function drawStamp(positionX, positionY, succeeded) {
+  push();
+  translate(positionX, positionY);
+  rotate(succeeded ? -0.16 : 0.13);
+  stroke(succeeded ? COLORS.green : COLORS.red);
+  strokeWeight(7);
+  noFill();
+  rect(-84, -40, 168, 80, 2);
+  drawFlatPixelText(succeeded ? "PASSED" : "FAIL", 0, 12, succeeded ? 40 : 48, succeeded ? COLORS.green : COLORS.red, CENTER);
+  pop();
 }
 
 function drawDiplomaScene(sceneFrame) {
