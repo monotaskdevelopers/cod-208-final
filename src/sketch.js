@@ -1,26 +1,196 @@
 let game;
 let questionPayload;
+let playerSprites;
+let fullscreenRequested = false;
+
+const PLAYER_ART = {
+  commuteHeight: 118,
+  crouchHeight: 82,
+  introHeight: 220
+};
+
+function getQuestionFallbackSet() {
+  return typeof QUESTION_FALLBACK !== "undefined" && Array.isArray(QUESTION_FALLBACK)
+    ? QUESTION_FALLBACK
+    : [];
+}
+
+function applyQuestionPayload(payload) {
+  if (!payload || !Array.isArray(payload.questions) || payload.questions.length === 0) {
+    return;
+  }
+  questionPayload = payload;
+  if (game) {
+    game.questions = payload.questions;
+  }
+}
+
+function loadQuestionPayload(pathIndex = 0) {
+  const questionPaths = ["assets/data/questions.json", "questions.json"];
+  if (typeof fetch !== "function" || pathIndex >= questionPaths.length) {
+    return;
+  }
+  fetch(questionPaths[pathIndex])
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Question fetch failed: ${questionPaths[pathIndex]}`);
+      }
+      return response.json();
+    })
+    .then((payload) => {
+      applyQuestionPayload(payload);
+    })
+    .catch(() => {
+      loadQuestionPayload(pathIndex + 1);
+    });
+}
+
+function loadPlayerImage(path) {
+  return loadImage(path, undefined, function handlePlayerImageError() {});
+}
+
+function requestGameFullscreen() {
+  if (fullscreenRequested || typeof document === "undefined") {
+    return;
+  }
+  const rootElement = document.documentElement;
+  if (!rootElement) {
+    return;
+  }
+  const activeFullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  if (activeFullscreenElement) {
+    fullscreenRequested = true;
+    return;
+  }
+  const requestFullscreen = rootElement.requestFullscreen || rootElement.webkitRequestFullscreen || rootElement.msRequestFullscreen;
+  if (typeof requestFullscreen !== "function") {
+    return;
+  }
+  try {
+    const requestResult = requestFullscreen.call(rootElement);
+    fullscreenRequested = true;
+    if (requestResult && typeof requestResult.catch === "function") {
+      requestResult.catch(() => {
+        fullscreenRequested = false;
+      });
+    }
+  } catch (error) {
+    fullscreenRequested = false;
+  }
+}
+
+function loadPlayerSpriteSet() {
+  return {
+    crouch: loadPlayerImage("assets/player/crouch.png"),
+    idle: loadPlayerImage("assets/player/idle.png"),
+    jump: loadPlayerImage("assets/player/jump.png"),
+    landing: loadPlayerImage("assets/player/landing_from_jump.png"),
+    readyToJump: loadPlayerImage("assets/player/ready_to_jump.png"),
+    walk: [
+      loadPlayerImage("assets/player/walk_1.png"),
+      loadPlayerImage("assets/player/walk_2.png")
+    ]
+  };
+}
+
+function getOpaqueBounds(sprite) {
+  if (!sprite || !sprite.width || !sprite.height) {
+    return { x: 0, y: 0, width: 1, height: 1 };
+  }
+  sprite.loadPixels();
+  let minX = sprite.width;
+  let minY = sprite.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let pixelY = 0; pixelY < sprite.height; pixelY += 1) {
+    for (let pixelX = 0; pixelX < sprite.width; pixelX += 1) {
+      const alphaIndex = (pixelY * sprite.width + pixelX) * 4 + 3;
+      if (sprite.pixels[alphaIndex] > 8) {
+        minX = Math.min(minX, pixelX);
+        minY = Math.min(minY, pixelY);
+        maxX = Math.max(maxX, pixelX);
+        maxY = Math.max(maxY, pixelY);
+      }
+    }
+  }
+  if (maxX < 0 || maxY < 0) {
+    return { x: 0, y: 0, width: sprite.width, height: sprite.height };
+  }
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1
+  };
+}
+
+function preparePlayerSprite(sprite) {
+  if (!sprite || !sprite.width || !sprite.height) {
+    return null;
+  }
+  const bounds = getOpaqueBounds(sprite);
+  return {
+    image: sprite,
+    bounds,
+    aspectRatio: bounds.width / Math.max(bounds.height, 1)
+  };
+}
+
+function preparePlayerSpriteSet(spriteSet) {
+  return {
+    crouch: preparePlayerSprite(spriteSet.crouch),
+    idle: preparePlayerSprite(spriteSet.idle),
+    jump: preparePlayerSprite(spriteSet.jump),
+    landing: preparePlayerSprite(spriteSet.landing),
+    readyToJump: preparePlayerSprite(spriteSet.readyToJump),
+    walk: spriteSet.walk.map((sprite) => preparePlayerSprite(sprite)).filter(Boolean)
+  };
+}
+
+function drawPlayerSprite(spriteData, positionX, floorY, targetHeight, options = {}) {
+  if (!spriteData || !spriteData.image) {
+    return false;
+  }
+  const { opacity = 255, offsetX = 0, offsetY = 0 } = options;
+  const drawWidth = targetHeight * spriteData.aspectRatio;
+  const drawX = positionX - drawWidth / 2 + offsetX;
+  const drawY = floorY - targetHeight + offsetY;
+  push();
+  imageMode(CORNER);
+  tint(255, opacity);
+  image(
+    spriteData.image,
+    drawX,
+    drawY,
+    drawWidth,
+    targetHeight,
+    spriteData.bounds.x,
+    spriteData.bounds.y,
+    spriteData.bounds.width,
+    spriteData.bounds.height
+  );
+  pop();
+  return true;
+}
 
 function preload() {
-  questionPayload = loadJSON(
-    "assets/data/questions.json",
-    function handleQuestionLoad(payload) {
-      questionPayload = payload;
-    },
-    function handleQuestionError() {
-      questionPayload = { questions: QUESTION_FALLBACK };
-    }
-  );
+  questionPayload = { questions: getQuestionFallbackSet() };
+  playerSprites = loadPlayerSpriteSet();
 }
 
 function setup() {
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
-  canvas.parent("game-root");
+  const gameRoot = typeof document !== "undefined" ? document.getElementById("game-root") : null;
+  if (gameRoot) {
+    canvas.parent(gameRoot);
+  }
   pixelDensity(1);
   noSmooth();
   frameRate(60);
   textFont("monospace");
-  const loadedQuestions = questionPayload && questionPayload.questions ? questionPayload.questions : QUESTION_FALLBACK;
+  playerSprites = preparePlayerSpriteSet(playerSprites);
+  loadQuestionPayload();
+  const loadedQuestions = questionPayload && questionPayload.questions ? questionPayload.questions : getQuestionFallbackSet();
   game = new Game(loadedQuestions);
 }
 
@@ -122,6 +292,78 @@ function drawPixelButton(positionX, positionY, buttonWidth, buttonHeight, label,
   fill(disabled ? "#d6d6d6" : COLORS.paper);
   text(label, positionX + buttonWidth / 2, positionY + buttonHeight / 2);
   pop();
+}
+
+function drawArrowKeyGlyph(positionX, positionY, direction, size, fillColor) {
+  push();
+  translate(positionX, positionY);
+  if (direction === "down") {
+    rotate(PI);
+  }
+  rectMode(CENTER);
+  noStroke();
+  fill(fillColor);
+  rect(0, size * 0.08, size * 0.18, size * 0.46, 2);
+  triangle(-size * 0.34, -size * 0.04, size * 0.34, -size * 0.04, 0, -size * 0.48);
+  pop();
+}
+
+function drawEnterKeyGlyph(positionX, positionY, size, fillColor) {
+  push();
+  translate(positionX, positionY);
+  stroke(fillColor);
+  strokeWeight(6);
+  strokeCap(SQUARE);
+  strokeJoin(MITER);
+  noFill();
+  beginShape();
+  vertex(-size * 0.34, -size * 0.24);
+  vertex(size * 0.22, -size * 0.24);
+  vertex(size * 0.22, size * 0.16);
+  vertex(-size * 0.04, size * 0.16);
+  endShape();
+  noStroke();
+  fill(fillColor);
+  triangle(-size * 0.04, size * 0.16, -size * 0.04, size * 0.42, -size * 0.34, size * 0.16);
+  pop();
+}
+
+function drawControlLegendKey(positionX, positionY, controlType, label) {
+  const keyWidth = 90;
+  const keyHeight = 66;
+  push();
+  stroke(COLORS.ink);
+  strokeWeight(4);
+  fill("#25324d");
+  rect(positionX - keyWidth / 2, positionY, keyWidth, keyHeight, 6);
+  noStroke();
+  fill("#456493");
+  rect(positionX - keyWidth / 2 + 6, positionY + 6, keyWidth - 12, 13, 3);
+  fill("#8fd7ff");
+  rect(positionX - keyWidth / 2 + 14, positionY + 11, keyWidth - 28, 4, 2);
+
+  if (controlType === "up" || controlType === "down") {
+    drawArrowKeyGlyph(positionX, positionY + keyHeight / 2 + 7, controlType, 36, COLORS.paper);
+  } else if (controlType === "enter") {
+    drawEnterKeyGlyph(positionX, positionY + keyHeight / 2 + 5, 42, COLORS.paper);
+  }
+
+  drawPixelText(label, positionX, positionY + keyHeight + 30, 18, COLORS.paper, CENTER);
+  pop();
+}
+
+function drawTitleControlLegend(positionX, positionY) {
+  const controls = [
+    { type: "up", label: "Jump" },
+    { type: "down", label: "Crouch" },
+    { type: "enter", label: "Confirm" }
+  ];
+  const keyGap = 164;
+  const startX = positionX - keyGap;
+  for (let controlIndex = 0; controlIndex < controls.length; controlIndex += 1) {
+    const control = controls[controlIndex];
+    drawControlLegendKey(startX + controlIndex * keyGap, positionY, control.type, control.label);
+  }
 }
 
 function drawProgressBar(positionX, positionY, barWidth, barHeight, amount, fillColor) {
@@ -236,7 +478,7 @@ class AudioManager {
 
 class Game {
   constructor(questions) {
-    this.questions = questions;
+    this.questions = Array.isArray(questions) ? questions : getQuestionFallbackSet();
     this.audio = new AudioManager();
     this.ui = new UIManager(this);
     this.keys = { up: false, down: false };
@@ -444,10 +686,11 @@ class Game {
     const pulseOffset = Math.sin(this.titlePulse) * 5;
     drawPixelButton(490, 485 + pulseOffset, 300, 64, "START", false);
     this.addHotspot("start", 490, 470, 300, 92, () => {
+      requestGameFullscreen();
       this.audio.menu();
       this.setState("difficulty-select");
     });
-    drawPixelText("UP: JUMP    DOWN: CROUCH    ENTER: CONFIRM", 640, 646, 22, COLORS.paper, CENTER);
+    drawTitleControlLegend(640, 574);
   }
 
   renderDifficultySelect() {
@@ -478,19 +721,33 @@ class Game {
     }
     drawPixelButton(470, 582, 340, 62, "BEGIN", true);
     this.addHotspot("begin-run", 470, 582, 340, 62, () => {
+      requestGameFullscreen();
       this.audio.menu();
       this.startNewRun();
     });
   }
 
   renderIntro() {
+    const portraitCenterX = 930;
+    const portraitShadowY = 472;
+    const portraitFloorY = 468;
+    const briefingTextX = 282;
+    const briefingTextWidth = 468;
     drawClassroomBackdrop();
     drawPanel(176, 112, 928, 462, "#19273e");
-    drawPixelText("SEMESTER BRIEFING", 282, 180, 42, COLORS.gold, LEFT);
-    drawWrappedText("Survive five weeks of auto-running commutes, dodge student-life distractions, and answer COD 208 quiz questions before the timer runs out.", 282, 245, 720, 34, 25, COLORS.paper, LEFT);
-    drawWrappedText(`Target: ${this.selectedDifficulty.targetCredits} credits on ${this.selectedDifficulty.label}. Each week quiz is worth 6 credits. Obstacles cost 1 credit.`, 282, 358, 720, 32, 23, "#8fd7ff", LEFT);
+    drawPanel(818, 156, 224, 332, "#213250");
+    noStroke();
+    fill(12, 21, 36, 90);
+    rect(834, 172, 192, 300, 4);
+    fill(12, 17, 30, 110);
+    ellipse(portraitCenterX, portraitShadowY, 118, 18);
+    drawPlayerSprite(playerSprites.idle, portraitCenterX, portraitFloorY, PLAYER_ART.introHeight);
+    drawPixelText("SEMESTER BRIEFING", briefingTextX, 180, 42, COLORS.gold, LEFT);
+    drawWrappedText("Survive five weeks of auto-running commutes, dodge student-life distractions, and answer COD 208 quiz questions before the timer runs out.", briefingTextX, 245, briefingTextWidth, 34, 25, COLORS.paper, LEFT);
+    drawWrappedText(`Target: ${this.selectedDifficulty.targetCredits} credits on ${this.selectedDifficulty.label}. Each week quiz is worth 6 credits. Obstacles cost 1 credit.`, briefingTextX, 432, briefingTextWidth, 32, 23, "#8fd7ff", LEFT);
     drawPixelButton(464, 610, 352, 58, "WEEK 1", true);
     this.addHotspot("intro-next", 464, 610, 352, 58, () => {
+      requestGameFullscreen();
       this.audio.menu();
       this.startLoading("week-intro", this.currentWeek.loadingText, 72);
     });
@@ -513,6 +770,7 @@ class Game {
     drawPixelText(`CREDITS: ${this.totalCredits} / ${this.selectedDifficulty.targetCredits}`, 392, 412, 25, COLORS.paper, LEFT);
     drawPixelButton(468, 592, 344, 58, "COMMUTE", true);
     this.addHotspot("week-start", 468, 592, 344, 58, () => {
+      requestGameFullscreen();
       this.audio.menu();
       this.startCommute();
     });
@@ -575,15 +833,19 @@ class Game {
 
   activatePrimary() {
     if (this.state === "title") {
+      requestGameFullscreen();
       this.setState("difficulty-select");
       this.audio.menu();
     } else if (this.state === "difficulty-select") {
+      requestGameFullscreen();
       this.startNewRun();
       this.audio.menu();
     } else if (this.state === "intro") {
+      requestGameFullscreen();
       this.startLoading("week-intro", this.currentWeek.loadingText, 72);
       this.audio.menu();
     } else if (this.state === "week-intro") {
+      requestGameFullscreen();
       this.startCommute();
       this.audio.menu();
     } else if (this.state === "week-summary") {
@@ -658,6 +920,8 @@ class Player {
     this.grounded = true;
     this.crouching = false;
     this.invulnerableFrames = 0;
+    this.jumpTakeoffFrames = 0;
+    this.landingFrames = 0;
     this.runFrame = 0;
   }
 
@@ -672,11 +936,17 @@ class Player {
     this.velocityY = -19.5;
     this.grounded = false;
     this.crouching = false;
+    this.jumpTakeoffFrames = 6;
+    this.landingFrames = 0;
     return true;
   }
 
   update(keys) {
-    this.runFrame += 0.2;
+    const wasGrounded = this.grounded;
+    const runningOnGround = this.grounded && !keys.down && playerSprites.walk.length > 0;
+    this.runFrame = runningOnGround
+      ? (this.runFrame + 0.12) % playerSprites.walk.length
+      : 0;
     if (this.grounded) {
       this.crouching = keys.down;
     }
@@ -687,9 +957,20 @@ class Player {
       this.positionY = GROUND_Y;
       this.velocityY = 0;
       this.grounded = true;
+      if (!wasGrounded) {
+        this.landingFrames = 7;
+      }
+    } else {
+      this.grounded = false;
     }
     if (this.invulnerableFrames > 0) {
       this.invulnerableFrames -= 1;
+    }
+    if (this.jumpTakeoffFrames > 0) {
+      this.jumpTakeoffFrames -= 1;
+    }
+    if (this.landingFrames > 0 && this.grounded) {
+      this.landingFrames -= 1;
     }
   }
 
@@ -707,12 +988,33 @@ class Player {
     };
   }
 
-  render() {
-    const bounds = this.getBounds();
-    const flicker = this.invulnerableFrames > 0 && frameCount % 6 < 3;
-    if (flicker) {
-      return;
+  getCurrentSprite() {
+    if (this.landingFrames > 0 && this.grounded && playerSprites.landing) {
+      return playerSprites.landing;
     }
+    if (this.crouching && this.grounded) {
+      return playerSprites.crouch;
+    }
+    if (!this.grounded) {
+      if (this.jumpTakeoffFrames > 0 && playerSprites.readyToJump) {
+        return playerSprites.readyToJump;
+      }
+      if (playerSprites.jump) {
+        return playerSprites.jump;
+      }
+    }
+    if (!playerSprites.walk.length) {
+      return null;
+    }
+    const walkFrameIndex = Math.floor(this.runFrame) % playerSprites.walk.length;
+    return playerSprites.walk[walkFrameIndex];
+  }
+
+  getSpriteHeight() {
+    return this.crouching && this.grounded ? PLAYER_ART.crouchHeight : PLAYER_ART.commuteHeight;
+  }
+
+  renderFallback(bounds) {
     push();
     translate(bounds.left, bounds.top);
     stroke(COLORS.ink);
@@ -730,6 +1032,26 @@ class Player {
     rect(10, this.height - 2 + stepOffset, 12, 8, 1);
     rect(this.width - 22, this.height - 2 - stepOffset, 12, 8, 1);
     pop();
+  }
+
+  render() {
+    const bounds = this.getBounds();
+    const flicker = this.invulnerableFrames > 0 && frameCount % 6 < 3;
+    if (flicker) {
+      return;
+    }
+    const currentSprite = this.getCurrentSprite();
+    if (currentSprite) {
+      push();
+      noStroke();
+      fill(12, 17, 30, this.grounded ? 92 : 48);
+      ellipse(this.positionX, this.positionY + 4, this.crouching ? 58 : 70, this.crouching ? 14 : 18);
+      pop();
+      if (drawPlayerSprite(currentSprite, this.positionX, this.positionY + 2, this.getSpriteHeight())) {
+        return;
+      }
+    }
+    this.renderFallback(bounds);
   }
 }
 
@@ -845,8 +1167,12 @@ class Obstacle {
 class QuizManager {
   constructor(questions, weekNumber) {
     this.questions = questions.slice(0, QUESTIONS_PER_WEEK);
+    const fallbackQuestions = getQuestionFallbackSet();
     while (this.questions.length < QUESTIONS_PER_WEEK) {
-      const fallback = QUESTION_FALLBACK.find((question) => question.week === weekNumber);
+      const fallback = fallbackQuestions.find((question) => question.week === weekNumber);
+      if (!fallback) {
+        break;
+      }
       this.questions.push(fallback);
     }
     this.weekNumber = weekNumber;
@@ -900,15 +1226,18 @@ class QuizManager {
   }
 
   render(gameInstance) {
+    const questionBoxY = 162;
+    const questionBoxHeight = 132;
+    const answerStartY = 348;
     drawPanel(140, 134, 1000, 452, "#f4f1e8");
     fill("#14213a");
     noStroke();
-    rect(166, 162, 948, 104, 3);
+    rect(166, questionBoxY, 948, questionBoxHeight, 3);
     drawPixelText(`QUESTION ${this.currentIndex + 1} / ${this.questions.length}`, 188, 202, 22, COLORS.gold, LEFT);
     drawWrappedText(this.currentQuestion.prompt, 188, 228, 890, 30, 23, COLORS.paper, LEFT);
     for (let answerIndex = 0; answerIndex < this.currentQuestion.options.length; answerIndex += 1) {
       const buttonX = 188 + (answerIndex % 2) * 456;
-      const buttonY = 320 + Math.floor(answerIndex / 2) * 104;
+      const buttonY = answerStartY + Math.floor(answerIndex / 2) * 104;
       let selected = false;
       let disabled = false;
       if (this.feedbackFrames > 0) {
@@ -1465,22 +1794,82 @@ function drawBedObstacle(positionX, positionY, damaged) {
 }
 
 function drawDiscoObstacle(positionX, positionY, damaged, accentColor) {
+  const centerX = positionX + 41;
+  const centerY = positionY + 46;
+  const radius = 41;
+  const spin = frameCount * 0.05;
+  const burstColors = damaged
+    ? ["#697385", "#8f98a7", "#b5bcc8"]
+    : [accentColor, "#ff5f91", "#64efff", "#ffe47a", "#9d80ff"];
+  const shadowTileColor = color(damaged ? "#6f7685" : "#8b95ab");
+  const highlightTileColor = color(damaged ? "#d1d5dc" : "#f4f7ff");
+
   push();
+  rectMode(CENTER);
   stroke(COLORS.ink);
   strokeWeight(4);
-  line(positionX + 41, 0, positionX + 41, positionY + 10);
-  fill(damaged ? "#8d8d8d" : accentColor);
-  ellipse(positionX + 41, positionY + 46, 82, 82);
-  strokeWeight(2);
-  stroke(COLORS.ink);
-  for (let gridIndex = -2; gridIndex <= 2; gridIndex += 1) {
-    line(positionX + 16, positionY + 46 + gridIndex * 14, positionX + 66, positionY + 46 + gridIndex * 14);
-    line(positionX + 41 + gridIndex * 13, positionY + 16, positionX + 41 + gridIndex * 13, positionY + 76);
-  }
+  line(centerX, 0, centerX, positionY + 6);
+  fill(damaged ? "#707785" : "#6e7a92");
+  rect(centerX, positionY + 10, 16, 10, 2);
+
   noStroke();
-  fill("#ffffff");
-  rect(positionX + 24, positionY + 25, 14, 10);
-  rect(positionX + 50, positionY + 52, 12, 10);
+  for (let beamIndex = 0; beamIndex < 10; beamIndex += 1) {
+    const beamAngle = spin + beamIndex * (TWO_PI / 10);
+    const beamColor = color(burstColors[beamIndex % burstColors.length]);
+    const stepCount = 3 + beamIndex % 3;
+    for (let stepIndex = 0; stepIndex < stepCount; stepIndex += 1) {
+      const beamDistance = radius + 10 + stepIndex * 12;
+      const pixelSize = stepIndex === 0 ? 10 : stepIndex === stepCount - 1 ? 6 : 8;
+      const offsetX = Math.round((Math.cos(beamAngle) * beamDistance) / 4) * 4;
+      const offsetY = Math.round((Math.sin(beamAngle) * beamDistance) / 4) * 4;
+      const alpha = damaged ? 34 - stepIndex * 6 : 118 - stepIndex * 18;
+      if (alpha <= 0) {
+        continue;
+      }
+      fill(red(beamColor), green(beamColor), blue(beamColor), alpha);
+      rect(centerX + offsetX, centerY + offsetY, pixelSize, pixelSize, 1);
+    }
+  }
+
+  noStroke();
+  fill(damaged ? "#7b808c" : "#95a0b8");
+  ellipse(centerX, centerY, radius * 2, radius * 2);
+
+  for (let tileY = -26; tileY <= 26; tileY += 10) {
+    for (let tileX = -26; tileX <= 26; tileX += 10) {
+      if (tileX * tileX + tileY * tileY > 29 * 29) {
+        continue;
+      }
+      const rotatedX = tileX * Math.cos(spin) - tileY * Math.sin(spin);
+      const shimmer = (Math.sin(rotatedX * 0.18 + spin * 4) + Math.cos(tileY * 0.22 - spin * 3) + 2) / 4;
+      fill(lerpColor(shadowTileColor, highlightTileColor, shimmer));
+      rect(centerX + tileX, centerY + tileY, 8, 8, 1);
+    }
+  }
+
+  push();
+  translate(centerX, centerY);
+  rotate(spin);
+  stroke(damaged ? "#c9ced6" : "#dfe7ff");
+  strokeWeight(2);
+  noFill();
+  ellipse(0, 0, 54, 54);
+  line(-24, 0, 24, 0);
+  line(0, -24, 0, 24);
+  line(-17, -17, 17, 17);
+  line(-17, 17, 17, -17);
+  pop();
+
+  stroke(COLORS.ink);
+  strokeWeight(3);
+  noFill();
+  ellipse(centerX, centerY, radius * 2, radius * 2);
+  noStroke();
+  fill(damaged ? "#f0f1f3" : "#ffffff");
+  rect(centerX - 14, centerY - 14, 10, 10, 1);
+  rect(centerX - 2, centerY - 24, 8, 8, 1);
+  fill(damaged ? "#cfd5df" : "#dff8ff");
+  rect(centerX + 12, centerY - 4, 6, 6, 1);
   pop();
 }
 
