@@ -1,6 +1,10 @@
+// The Last Semester
+// majority of the code was written by AI (except a few parts) - the concept, logic, design, and assets were all created by us.
+
 let game;
 let questionPayload;
 let playerSprites;
+let uiImages;
 let fullscreenRequested = false;
 
 const PLAYER_ART = {
@@ -47,6 +51,20 @@ function loadQuestionPayload(pathIndex = 0) {
 
 function loadPlayerImage(path) {
   return loadImage(path, undefined, function handlePlayerImageError() {});
+}
+
+function loadUiImage(path) {
+  return loadImage(path, undefined, function handleUiImageError() {});
+}
+
+function loadUiImageSet() {
+  return {
+    answerCorrect: loadUiImage("assets/ui/answer_correct.jpg"),
+    answerWrong: loadUiImage("assets/ui/answer_wrong.jpg"),
+    instagramLogo: loadUiImage("assets/ui/instagram-logo.svg"),
+    diplomaPassedSticker: loadUiImage("assets/ui/diploma_sticker.png"),
+    diplomaFailedSticker: loadUiImage("assets/ui/diploma_failed.jpg")
+  };
 }
 
 function requestGameFullscreen() {
@@ -176,6 +194,7 @@ function drawPlayerSprite(spriteData, positionX, floorY, targetHeight, options =
 function preload() {
   questionPayload = { questions: getQuestionFallbackSet() };
   playerSprites = loadPlayerSpriteSet();
+  uiImages = loadUiImageSet();
 }
 
 function setup() {
@@ -744,7 +763,8 @@ class Game {
     drawPlayerSprite(playerSprites.idle, portraitCenterX, portraitFloorY, PLAYER_ART.introHeight);
     drawPixelText("SEMESTER BRIEFING", briefingTextX, 180, 42, COLORS.gold, LEFT);
     drawWrappedText("Survive five weeks of auto-running commutes, dodge student-life distractions, and answer COD 208 quiz questions before the timer runs out.", briefingTextX, 245, briefingTextWidth, 34, 25, COLORS.paper, LEFT);
-    drawWrappedText(`Target: ${this.selectedDifficulty.targetCredits} credits on ${this.selectedDifficulty.label}. Each week quiz is worth 6 credits. Obstacles cost 1 credit.`, briefingTextX, 432, briefingTextWidth, 32, 23, "#8fd7ff", LEFT);
+    drawWrappedText(`Target: ${this.selectedDifficulty.targetCredits} credits on ${this.selectedDifficulty.label}. Each week quiz is worth 6 credits.`, briefingTextX, 432, briefingTextWidth, 32, 23, "#8fd7ff", LEFT);
+    drawWrappedText("Obstacles cost 1 credit.", briefingTextX, 496, briefingTextWidth, 32, 23, COLORS.red, LEFT);
     drawPixelButton(464, 610, 352, 58, "WEEK 1", true);
     this.addHotspot("intro-next", 464, 610, 352, 58, () => {
       requestGameFullscreen();
@@ -1229,18 +1249,24 @@ class QuizManager {
     const questionBoxY = 162;
     const questionBoxHeight = 132;
     const answerStartY = 348;
+    const showingFeedback = this.feedbackFrames > 0;
+    const correct = showingFeedback && this.selectedIndex === this.currentQuestion.correctIndex;
+    const feedbackImage = uiImages && (correct ? uiImages.answerCorrect : uiImages.answerWrong);
     drawPanel(140, 134, 1000, 452, "#f4f1e8");
     fill("#14213a");
     noStroke();
     rect(166, questionBoxY, 948, questionBoxHeight, 3);
     drawPixelText(`QUESTION ${this.currentIndex + 1} / ${this.questions.length}`, 188, 202, 22, COLORS.gold, LEFT);
-    drawWrappedText(this.currentQuestion.prompt, 188, 228, 890, 30, 23, COLORS.paper, LEFT);
+    drawWrappedText(this.currentQuestion.prompt, 188, 228, showingFeedback ? 690 : 890, 30, 23, COLORS.paper, LEFT);
+    if (showingFeedback) {
+      drawQuizFeedbackImage(1008, 228, 88, feedbackImage, correct ? COLORS.green : COLORS.red);
+    }
     for (let answerIndex = 0; answerIndex < this.currentQuestion.options.length; answerIndex += 1) {
       const buttonX = 188 + (answerIndex % 2) * 456;
       const buttonY = answerStartY + Math.floor(answerIndex / 2) * 104;
       let selected = false;
       let disabled = false;
-      if (this.feedbackFrames > 0) {
+      if (showingFeedback) {
         selected = answerIndex === this.currentQuestion.correctIndex;
         disabled = answerIndex !== this.currentQuestion.correctIndex;
       } else {
@@ -1251,8 +1277,7 @@ class QuizManager {
         this.answer(answerIndex, gameInstance.audio);
       });
     }
-    if (this.feedbackFrames > 0) {
-      const correct = this.selectedIndex === this.currentQuestion.correctIndex;
+    if (showingFeedback) {
       drawPixelText(correct ? "CORRECT" : "MISSED", 548, 548, 26, correct ? COLORS.green : COLORS.red, LEFT);
     }
   }
@@ -1280,6 +1305,24 @@ class UIManager {
     const timerColor = this.game.quiz.timer <= 10 ? COLORS.red : COLORS.paper;
     drawPixelText(`TIME ${Math.ceil(this.game.quiz.timer)}`, 1020, 69, 26, timerColor, LEFT);
   }
+}
+
+function drawQuizFeedbackImage(centerX, centerY, imageSize, feedbackImage, accentColor) {
+  const frameSize = imageSize + 18;
+  push();
+  rectMode(CENTER);
+  noStroke();
+  fill(10, 15, 26, 55);
+  rect(centerX + 6, centerY + 6, frameSize, frameSize, 8);
+  stroke(accentColor);
+  strokeWeight(4);
+  fill(COLORS.paper);
+  rect(centerX, centerY, frameSize, frameSize, 8);
+  if (feedbackImage && feedbackImage.width && feedbackImage.height) {
+    imageMode(CENTER);
+    image(feedbackImage, centerX, centerY, imageSize, imageSize);
+  }
+  pop();
 }
 
 function drawSkyGradient(topColor, bottomColor) {
@@ -1881,15 +1924,27 @@ function drawPhoneObstacle(positionX, positionY, damaged) {
   rect(positionX, positionY, 70, 86, 6);
   fill("#f4f1e8");
   rect(positionX + 10, positionY + 12, 50, 54, 3);
-  noFill();
-  stroke(damaged ? "#9ba4b6" : COLORS.red);
-  strokeWeight(5);
-  ellipse(positionX + 35, positionY + 39, 29, 29);
-  point(positionX + 46, positionY + 27);
+  const logoImage = uiImages && uiImages.instagramLogo;
+  if (logoImage && logoImage.width && logoImage.height) {
+    imageMode(CENTER);
+    image(logoImage, positionX + 35, positionY + 39, 30, 30);
+  } else {
+    drawPhoneAppIcon(positionX + 35, positionY + 39, damaged);
+  }
   noStroke();
   fill(COLORS.red);
   rect(positionX + 46, positionY - 8, 24, 24, 12);
   drawPixelText("!", positionX + 53, positionY + 10, 16, COLORS.paper, LEFT);
+  pop();
+}
+
+function drawPhoneAppIcon(centerX, centerY, damaged) {
+  push();
+  noFill();
+  stroke(damaged ? "#9ba4b6" : COLORS.red);
+  strokeWeight(5);
+  ellipse(centerX, centerY, 29, 29);
+  point(centerX + 11, centerY - 12);
   pop();
 }
 
@@ -2039,7 +2094,7 @@ function drawDiplomaDocument(positionX, positionY, documentWidth, documentHeight
   drawFlatPixelText(`${totalCredits} / ${targetCredits} CREDITS`, positionX + documentWidth / 2, positionY + 292, 27, "#2e5fd6", CENTER);
   drawFlatPixelText(`${difficultyLabel.toUpperCase()} TARGET`, positionX + documentWidth / 2, positionY + 386, 22, COLORS.ink, CENTER);
   drawOzuSeal(positionX + 148, positionY + 382, succeeded);
-  drawStamp(positionX + documentWidth - 214, positionY + 386, succeeded);
+  drawDiplomaSticker(positionX + documentWidth - 180, positionY + 40, succeeded);
 }
 
 function drawOzuSeal(positionX, positionY, succeeded) {
@@ -2063,6 +2118,30 @@ function drawStamp(positionX, positionY, succeeded) {
   noFill();
   rect(-84, -40, 168, 80, 2);
   drawFlatPixelText(succeeded ? "PASSED" : "FAIL", 0, 12, succeeded ? 40 : 48, succeeded ? COLORS.green : COLORS.red, CENTER);
+  pop();
+}
+
+function drawDiplomaSticker(positionX, positionY, succeeded) {
+  const stickerImage = uiImages && (succeeded ? uiImages.diplomaPassedSticker : uiImages.diplomaFailedSticker);
+  const stickerSize = 128;
+  if (!stickerImage || !stickerImage.width || !stickerImage.height) {
+    drawStamp(positionX + stickerSize / 2, positionY + stickerSize / 2, succeeded);
+    return;
+  }
+
+  push();
+  translate(positionX + stickerSize / 2, positionY + stickerSize / 2);
+  rotate(succeeded ? 0.08 : -0.08);
+  rectMode(CENTER);
+  noStroke();
+  fill(18, 24, 36, 42);
+  rect(8, 8, stickerSize, stickerSize, 10);
+  stroke(succeeded ? COLORS.green : COLORS.red);
+  strokeWeight(4);
+  fill(COLORS.paper);
+  rect(0, 0, stickerSize, stickerSize, 10);
+  imageMode(CENTER);
+  image(stickerImage, 0, 0, stickerSize - 12, stickerSize - 12);
   pop();
 }
 

@@ -4,6 +4,8 @@ const GROUND_Y = 574;
 const MAX_WEEKS = 5;
 const QUIZ_SECONDS = 60;
 const QUESTIONS_PER_WEEK = 6;
+const BASE_WEEK_SPEED = 6.2;
+const WEEK_SPEED_MULTIPLIER = 1.2;
 
 const COLORS = {
   ink: "#1c1c24",
@@ -46,7 +48,7 @@ const WEEK_CONFIGS = [
     id: 1,
     title: "Campus Wakeup",
     subtitle: "Quadrangle paths, morning buzz, first-week pace",
-    speed: 5.2,
+    speed: BASE_WEEK_SPEED,
     length: 5600,
     spacing: 760,
     palette: {
@@ -66,7 +68,7 @@ const WEEK_CONFIGS = [
     id: 2,
     title: "Hallway Hustle",
     subtitle: "Lockers, posters, and tighter mixed decisions",
-    speed: 6.1,
+    speed: BASE_WEEK_SPEED * WEEK_SPEED_MULTIPLIER,
     length: 6200,
     spacing: 740,
     palette: {
@@ -86,7 +88,7 @@ const WEEK_CONFIGS = [
     id: 3,
     title: "Cafeteria Chaos",
     subtitle: "Tray lines, vending glow, and louder distractions",
-    speed: 6.9,
+    speed: BASE_WEEK_SPEED * WEEK_SPEED_MULTIPLIER ** 2,
     length: 6900,
     spacing: 720,
     palette: {
@@ -106,7 +108,7 @@ const WEEK_CONFIGS = [
     id: 4,
     title: "Library Stacks",
     subtitle: "Shelves, desk lamps, and denser obstacle chains",
-    speed: 7.8,
+    speed: BASE_WEEK_SPEED * WEEK_SPEED_MULTIPLIER ** 3,
     length: 7600,
     spacing: 700,
     palette: {
@@ -126,7 +128,7 @@ const WEEK_CONFIGS = [
     id: 5,
     title: "OZU Final Hall",
     subtitle: "Banners, exam doors, and the classroom in sight",
-    speed: 8.8,
+    speed: BASE_WEEK_SPEED * WEEK_SPEED_MULTIPLIER ** 4,
     length: 8400,
     spacing: 680,
     palette: {
