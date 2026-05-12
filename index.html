@@ -1,16 +1,26 @@
 <!DOCTYPE html>
+<!-- this is the main html file, the brwoser opens this first -->
 <html lang="en">
   <head>
+    <!-- charset makes sure special characters dont break the page -->
     <meta charset="UTF-8" />
+    <!-- this viewport tag stops phones from zooming out too far -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- this is just the name that shows up on the browser tab -->
     <title>The Last Semester</title>
+    <!-- style.css makes the page look good, loaded before the game starts -->
     <link rel="stylesheet" href="style.css" />
+    <!-- p5 is the drawing libary that does all the canvas stuff for us -->
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js" defer></script>
+    <!-- config.js has all the numbers and settings the game needs -->
     <script src="src/config.js" defer></script>
+    <!-- sketch.js is the main game code, loads last so evrything else is ready -->
     <script src="src/sketch.js" defer></script>
   </head>
   <body>
+    <!-- game-shell is the fake arcade border that frames the canvas -->
     <main id="game-shell" aria-label="The Last Semester game canvas">
+      <!-- game-root is empty on purpose, p5 drops the canvas in here -->
       <div id="game-root"></div>
     </main>
   </body>

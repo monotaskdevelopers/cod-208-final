@@ -68,117 +68,117 @@
     },
     {
       "week": 2,
-      "prompt": "Why store week settings in data instead of scattered code?",
-      "options": ["It makes tuning easier", "It disables input", "It removes the canvas", "It hides variables"],
+     "prompt": "What color does background(0) create?",
+      "options": ["White", "Red", "Gray", "Black"],
+      "correctIndex": 3
+    },
+    {
+      "week": 3,
+      "prompt": "Which function removes the border from shapes?",
+    "options": ["noBorder()", "clearStroke()", "noStroke()", "hideStroke()"],
+    "correctIndex": 2
+    },
+    {
+      "week": 3,
+      "prompt": "Which function draws a straight line?",
+    "options": ["drawLine()", "line()", "path()", "strokeLine()"],
+    "correctIndex": 1
+    },
+    {
+      "week": 3,
+      "prompt": "Which function displays text on the canvas?",
+    "options": ["write()", "label()", "text()", "printText()"],
+    "correctIndex": 2
+    },
+    {
+      "week": 3,
+      "prompt": "Which symbol is used for comments in JavaScript?",
+    "options": ["//", "##", "<!--", "**"],
+    "correctIndex": 0
+    },
+    {
+      "week": 3,
+      "prompt": "Which p5.js function can move the ORIGIN before drawing?",
+      "options": ["translate()", "fill()", "createCanvas()", "frameRate()"],
       "correctIndex": 0
     },
     {
       "week": 3,
-      "prompt": "In a platformer, gravity usually changes which value?",
-      "options": ["Horizontal color", "Vertical velocity", "Font size", "Mouse position"],
-      "correctIndex": 1
-    },
-    {
-      "week": 3,
-      "prompt": "AABB collision means checking overlap between what?",
-      "options": ["Audio tracks", "Rectangular bounds", "Color palettes", "Keyboard strings"],
-      "correctIndex": 1
-    },
-    {
-      "week": 3,
-      "prompt": "Why add a short invulnerability timer after a hit?",
-      "options": ["To prevent repeated damage per overlap", "To stop drawing the HUD", "To reset all questions", "To increase font weight"],
-      "correctIndex": 0
-    },
-    {
-      "week": 3,
-      "prompt": "What does deltaTime help measure?",
-      "options": ["Elapsed time between frames", "The active font", "The number of images", "The selected answer"],
-      "correctIndex": 0
-    },
-    {
-      "week": 3,
-      "prompt": "Which input should trigger a jump in this game?",
-      "options": ["Left arrow", "Up arrow", "Escape", "Spacebar only"],
-      "correctIndex": 1
-    },
-    {
-      "week": 3,
-      "prompt": "What makes a high obstacle fair?",
-      "options": ["It is readable before it reaches the player", "It is invisible", "It changes size randomly", "It overlaps the HUD"],
-      "correctIndex": 0
-    },
-    {
-      "week": 4,
-      "prompt": "What is a game state manager responsible for?",
-      "options": ["Screen transitions and run data", "Only drawing one rectangle", "Only browser reloads", "Only image compression"],
-      "correctIndex": 0
-    },
-    {
-      "week": 4,
-      "prompt": "Which state should handle multiple-choice questions?",
-      "options": ["commute", "quiz", "title", "ending"],
+      "prompt": "Which p5.js function can rotate shapes or images?",
+      "options": ["background()", "rotate()", "strokeWeight()", "textAlign()"],
       "correctIndex": 1
     },
     {
       "week": 4,
-      "prompt": "Why keep commute and classroom systems separate?",
-      "options": ["They have different rules and pacing", "They use the same obstacles", "They both need gravity", "They should share every variable"],
+      "prompt": "Which function clears the canvas with a fresh color?",
+      "options": ["createCanvas()", "text()", "background()", "noStroke()"],
+      "correctIndex": 2
+    },
+    {
+      "week": 4,
+      "prompt": "Which function draws a rectangle in p5.js?",
+      "options": ["ellipse()", "rect()", "triangle()", "point()"],
+      "correctIndex": 1
+    },
+    {
+      "week": 4,
+      "prompt": "What does noStroke() do?",
+      "options": ["It removes outlines from shapes", "It removes fill colors", "It stops the draw loop", "It changes text size"],
       "correctIndex": 0
     },
     {
       "week": 4,
-      "prompt": "Which method is a clean way to restart a run?",
-      "options": ["Reset central game values", "Reload every image each frame", "Delete the canvas", "Ignore input"],
-      "correctIndex": 0
+      "prompt": "Which function draws an image onto the canvas?",
+      "options": ["line()", "rect()", "tint()", "image()"],
+      "correctIndex": 3
     },
     {
       "week": 4,
-      "prompt": "What does a HUD usually show?",
-      "options": ["Status values during play", "Only source code", "Browser history", "Asset filenames"],
-      "correctIndex": 0
+      "prompt": "Which function shows words on the canvas?",
+      "options": ["background()", "text()", "scale()", "rotate()"],
+      "correctIndex": 1
     },
     {
       "week": 4,
-      "prompt": "What should happen after Week 5 summary?",
-      "options": ["Compare credits to the target", "Start Week 1 again automatically", "Hide the ending", "Erase difficulty"],
+       "prompt": "Which data type is used for numbers?",
+    "options": ["text", "number", "int", "string"],
+    "correctIndex": 1
+    },
+    {
+      "week": 5,
+      "prompt": "Which function sets the outline color for shapes?",
+      "options": ["stroke()", "fill()", "noLoop()", "circle()"],
       "correctIndex": 0
     },
     {
       "week": 5,
-      "prompt": "Which visual rule matters most for a fast platformer?",
-      "options": ["Readable silhouettes", "Tiny hidden hazards", "Thin low-contrast text", "Random layouts"],
-      "correctIndex": 0
-    },
-    {
-      "week": 5,
-      "prompt": "Why use parallax layers?",
-      "options": ["To suggest depth and motion", "To remove collision logic", "To pause the timer", "To replace all inputs"],
-      "correctIndex": 0
-    },
-    {
-      "week": 5,
-      "prompt": "What is the maximum credit total after five perfect quizzes?",
-      "options": ["20", "26", "30", "60"],
+      "prompt": "Which function gives a random value?",
+      "options": ["map()", "constrain()", "random()", "dist()"],
       "correctIndex": 2
     },
     {
       "week": 5,
-      "prompt": "Which difficulty target requires a perfect score?",
-      "options": ["Easy", "Medium", "Hard", "Practice"],
+      "prompt": "Which function changes text size?",
+    "options": ["fontSize()", "textSize()", "sizeText()", "scaleText()"],
+    "correctIndex": 1
+    },
+    {
+      "week": 5,
+      "prompt": "Which constant is often used to center text or shapes?",
+      "options": ["LEFT", "TOP", "BOTTOM", "CENTER"],
+      "correctIndex": 3
+    },
+    {
+      "week": 5,
+      "prompt": "Which p5.js function can draw a circle or oval?",
+      "options": ["square()", "arc()", "ellipse()", "quad()"],
       "correctIndex": 2
     },
     {
       "week": 5,
-      "prompt": "What should a final screen communicate?",
-      "options": ["Whether the player graduated", "Only the first question", "Only obstacle speed", "Nothing"],
-      "correctIndex": 0
-    },
-    {
-      "week": 5,
-      "prompt": "Which choice best supports maintainable game content?",
-      "options": ["Week and quiz data in structured objects", "Every number hidden in draw()", "Duplicated collision code", "No reset path"],
-      "correctIndex": 0
+      "prompt": "do you like COD 208?",
+      "options": ["Yes", "Of course", "definitely", "YES!"],
+      "correctIndex": [0, 1, 2, 3]
     }
   ]
 }

@@ -1,12 +1,20 @@
+// canvas width and height are how big the game drawing area is in pixels
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
+// ground_y is where the floor is so the player lands at the right height
 const GROUND_Y = 574;
+// the game has five weeks total before you reach the end
 const MAX_WEEKS = 5;
+// each quiz gives the player 60 seconds to answer all the questions
 const QUIZ_SECONDS = 60;
+// six questions per week, each one is worth one credit if you get it right
 const QUESTIONS_PER_WEEK = 6;
+// base speed is how fast week 1 scrolls, the later weeks build on this
 const BASE_WEEK_SPEED = 6.2;
+// every new week gets 20 persent faster using this multiplyer
 const WEEK_SPEED_MULTIPLIER = 1.2;
 
+// these are all the colors we use, keeping them here means we only have to change one spot
 const COLORS = {
   ink: "#1c1c24",
   panel: "#253047",
@@ -22,6 +30,8 @@ const COLORS = {
   dirtShadow: "#8a5b2f"
 };
 
+// difficulty controls how many credits you need to graduate at the end
+// easy is forgiving, hard makes you do almost everything right
 const DIFFICULTIES = [
   {
     id: "easy",
@@ -43,7 +53,10 @@ const DIFFICULTIES = [
   }
 ];
 
+// week configs hold everything each week needs, speed, colors, and obstacle order
+// putting them all here makes it easy to tweak one week without touching the game code
 const WEEK_CONFIGS = [
+  // week 1 is slow and simple so the player can learn the controls
   {
     id: 1,
     title: "Campus Wakeup",
@@ -64,6 +77,7 @@ const WEEK_CONFIGS = [
     patterns: ["bed", "disco", "phone", "bedDisco", "bed", "phone"],
     loadingText: "Crossing the campus quad"
   },
+  // week 2 goes a little faster and starts mixing obsticles together
   {
     id: 2,
     title: "Hallway Hustle",
@@ -84,6 +98,7 @@ const WEEK_CONFIGS = [
     patterns: ["phone", "bed", "disco", "phoneBed", "doubleBed", "disco"],
     loadingText: "Finding the next lecture hall"
   },
+  // week 3 is louder and the obstacles start coming in pairs more often
   {
     id: 3,
     title: "Cafeteria Chaos",
@@ -104,6 +119,7 @@ const WEEK_CONFIGS = [
     patterns: ["disco", "phone", "bedDisco", "phone", "discoBed", "bed"],
     loadingText: "Crossing the student commons"
   },
+  // week 4 is the libary, things get tight and the spacing is smaller
   {
     id: 4,
     title: "Library Stacks",
@@ -124,6 +140,7 @@ const WEEK_CONFIGS = [
     patterns: ["phoneBed", "bed", "disco", "phoneDisco", "bed", "doubleBed"],
     loadingText: "Looking for a silent corner"
   },
+  // week 5 is the final hall, fastest speed and the hardest obstacle mix
   {
     id: 5,
     title: "OZU Final Hall",
@@ -146,9 +163,12 @@ const WEEK_CONFIGS = [
   }
 ];
 
+// obstacle defs say how big each one is and wether you jump or crouch to avoid it
+// the collider inset makes the hit box a bit smaller so it feels more fair
 const OBSTACLE_DEFS = {
   bed: {
     label: "Bed",
+    // bed is on the ground so you have to jump over it
     action: "jump",
     width: 118,
     height: 52,
@@ -156,6 +176,7 @@ const OBSTACLE_DEFS = {
   },
   disco: {
     label: "Party",
+    // disco ball hangs in the air so you duck under it
     action: "crouch",
     width: 82,
     height: 92,
@@ -163,6 +184,7 @@ const OBSTACLE_DEFS = {
   },
   phone: {
     label: "Scroll",
+    // phone is on the ground, jump to avoid getting distracted
     action: "jump",
     width: 70,
     height: 86,
@@ -170,10 +192,13 @@ const OBSTACLE_DEFS = {
   }
 };
 
+// the pattern library groups obstacles into named combos for each week to use
+// single ones are easy, the multi ones are harder and need quick thinking
 const PATTERN_LIBRARY = {
   bed: [{ type: "bed", offset: 0 }],
   disco: [{ type: "disco", offset: 0 }],
   phone: [{ type: "phone", offset: 0 }],
+  // bedDisco puts a bed right after a disco so the player has to jump then duck fast
   bedDisco: [
     { type: "bed", offset: 0 },
     { type: "disco", offset: 335 }
@@ -194,6 +219,7 @@ const PATTERN_LIBRARY = {
     { type: "phone", offset: 0 },
     { type: "disco", offset: 360 }
   ],
+  // doubleBed is just two beds close togther which trips people up
   doubleBed: [
     { type: "bed", offset: 0 },
     { type: "bed", offset: 380 }
@@ -207,6 +233,7 @@ const PATTERN_LIBRARY = {
     { type: "phone", offset: 360 },
     { type: "disco", offset: 735 }
   ],
+  // finalMix is four obstacles back to back, only shows up in week 5
   finalMix: [
     { type: "disco", offset: 0 },
     { type: "bed", offset: 350 },
@@ -215,7 +242,10 @@ const PATTERN_LIBRARY = {
   ]
 };
 
+// this fallback list is used when the questions.json file can't be loaded
+// its the same questions the real file has so the game still works ofline
 const QUESTION_FALLBACK = [
+  // week 1 questions are all about basic p5 stuff like setup and draw
   {
     week: 1,
     prompt: "Which p5.js function is called once when the sketch first starts?",
@@ -252,6 +282,7 @@ const QUESTION_FALLBACK = [
     options: ["It stores keyboard input", "It loads assets before setup", "It checks collisions", "It changes screen size"],
     correctIndex: 1
   },
+  // week 2 questions move on to javascript basics like arrays and objects
   {
     week: 2,
     prompt: "Which JavaScript data type is best for an ordered list of quiz questions?",
@@ -288,6 +319,7 @@ const QUESTION_FALLBACK = [
     options: ["It makes tuning easier", "It disables input", "It removes the canvas", "It hides variables"],
     correctIndex: 0
   },
+  // week 3 asks about movement and colision stuff in games
   {
     week: 3,
     prompt: "In a platformer, gravity usually changes which value?",
@@ -314,86 +346,89 @@ const QUESTION_FALLBACK = [
   },
   {
     week: 3,
-    prompt: "Which input should trigger a jump in this game?",
-    options: ["Left arrow", "Up arrow", "Escape", "Spacebar only"],
-    correctIndex: 1
+    prompt: "Which p5.js function can move the origin before drawing?",
+    options: ["translate()", "fill()", "createCanvas()", "frameRate()"],
+    correctIndex: 0
   },
   {
     week: 3,
-    prompt: "What makes a high obstacle fair?",
-    options: ["It is readable before it reaches the player", "It is invisible", "It changes size randomly", "It overlaps the HUD"],
-    correctIndex: 0
+    prompt: "Which p5.js function can rotate shapes or images?",
+    options: ["background()", "rotate()", "strokeWeight()", "textAlign()"],
+    correctIndex: 1
+  },
+  // week 4 goes back to p5 drawing functions like rect and background
+  {
+    week: 4,
+    prompt: "Which function clears the canvas with a fresh color?",
+    options: ["createCanvas()", "text()", "background()", "noStroke()"],
+    correctIndex: 2
   },
   {
     week: 4,
-    prompt: "What is a game state manager responsible for?",
-    options: ["Screen transitions and run data", "Only drawing one rectangle", "Only browser reloads", "Only image compression"],
-    correctIndex: 0
-  },
-  {
-    week: 4,
-    prompt: "Which state should handle multiple-choice questions?",
-    options: ["commute", "quiz", "title", "ending"],
+    prompt: "Which function draws a rectangle in p5.js?",
+    options: ["ellipse()", "rect()", "triangle()", "point()"],
     correctIndex: 1
   },
   {
     week: 4,
-    prompt: "Why keep commute and classroom systems separate?",
-    options: ["They have different rules and pacing", "They use the same obstacles", "They both need gravity", "They should share every variable"],
+    prompt: "What does noStroke() do?",
+    options: ["It removes outlines from shapes", "It removes fill colors", "It stops the draw loop", "It changes text size"],
     correctIndex: 0
   },
   {
     week: 4,
-    prompt: "Which method is a clean way to restart a run?",
-    options: ["Reset central game values", "Reload every image each frame", "Delete the canvas", "Ignore input"],
-    correctIndex: 0
+    prompt: "Which function draws an image onto the canvas?",
+    options: ["line()", "rect()", "tint()", "image()"],
+    correctIndex: 3
   },
   {
     week: 4,
-    prompt: "What does a HUD usually show?",
-    options: ["Status values during play", "Only source code", "Browser history", "Asset filenames"],
-    correctIndex: 0
+    prompt: "Which function shows words on the canvas?",
+    options: ["background()", "text()", "scale()", "rotate()"],
+    correctIndex: 1
   },
   {
     week: 4,
-    prompt: "What should happen after Week 5 summary?",
-    options: ["Compare credits to the target", "Start Week 1 again automatically", "Hide the ending", "Erase difficulty"],
+    prompt: "What do push() and pop() help save and restore?",
+    options: ["They load pictures from files", "They pause the sketch", "They save and restore drawing settings", "They count frames"],
+    correctIndex: 2
+  },
+  // week 5 questions cover more p5 helpers and then ends with the fun one
+  {
+    week: 5,
+    prompt: "Which function sets the outline color for shapes?",
+    options: ["stroke()", "fill()", "noLoop()", "circle()"],
     correctIndex: 0
   },
   {
     week: 5,
-    prompt: "Which visual rule matters most for a fast platformer?",
-    options: ["Readable silhouettes", "Tiny hidden hazards", "Thin low-contrast text", "Random layouts"],
-    correctIndex: 0
-  },
-  {
-    week: 5,
-    prompt: "Why use parallax layers?",
-    options: ["To suggest depth and motion", "To remove collision logic", "To pause the timer", "To replace all inputs"],
-    correctIndex: 0
-  },
-  {
-    week: 5,
-    prompt: "What is the maximum credit total after five perfect quizzes?",
-    options: ["20", "26", "30", "60"],
+    prompt: "Which function gives a random value?",
+    options: ["map()", "constrain()", "random()", "dist()"],
     correctIndex: 2
   },
   {
     week: 5,
-    prompt: "Which difficulty target requires a perfect score?",
-    options: ["Easy", "Medium", "Hard", "Practice"],
+    prompt: "Which function can remap one number range into another?",
+    options: ["lerp()", "map()", "text()", "vertex()"],
+    correctIndex: 1
+  },
+  {
+    week: 5,
+    prompt: "Which constant is often used to center text or shapes?",
+    options: ["LEFT", "TOP", "BOTTOM", "CENTER"],
+    correctIndex: 3
+  },
+  {
+    week: 5,
+    prompt: "Which p5.js function can draw a circle or oval?",
+    options: ["square()", "arc()", "ellipse()", "quad()"],
     correctIndex: 2
   },
   {
     week: 5,
-    prompt: "What should a final screen communicate?",
-    options: ["Whether the player graduated", "Only the first question", "Only obstacle speed", "Nothing"],
-    correctIndex: 0
-  },
-  {
-    week: 5,
-    prompt: "Which choice best supports maintainable game content?",
-    options: ["Week and quiz data in structured objects", "Every number hidden in draw()", "Duplicated collision code", "No reset path"],
-    correctIndex: 0
+    prompt: "do you like COD 208?",
+    options: ["Yes", "Of course", "definitely", "YES!"],
+    // all four answers are correct here so everyone gets this one right
+    correctIndex: [0, 1, 2, 3]
   }
 ];

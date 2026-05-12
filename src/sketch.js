@@ -1,24 +1,30 @@
 // The Last Semester
-// majority of the code was written by AI (except a few parts) - the concept, logic, design, and assets were all created by us.
+// majority of the code was written by AI (except a few parts) - the comments, concept, logic, design, and assets were all created by us.
+// the game, player, levels, quiz, and drawing are all in here
 
+// game is the main object that controls everything happening on screen
+// the other vars hold images and quiz data that everything else needs
 let game;
 let questionPayload;
 let playerSprites;
 let uiImages;
 let fullscreenRequested = false;
 
+// player_art stores the pixel heights for each pose so the drawing stays conistent
 const PLAYER_ART = {
   commuteHeight: 118,
   crouchHeight: 82,
   introHeight: 220
 };
 
+// this returns the backup questions from config if the json file hasnt loaded yet
 function getQuestionFallbackSet() {
   return typeof QUESTION_FALLBACK !== "undefined" && Array.isArray(QUESTION_FALLBACK)
     ? QUESTION_FALLBACK
     : [];
 }
 
+// once the real questions.json loads, this function puts them into the game
 function applyQuestionPayload(payload) {
   if (!payload || !Array.isArray(payload.questions) || payload.questions.length === 0) {
     return;
@@ -29,12 +35,14 @@ function applyQuestionPayload(payload) {
   }
 }
 
+// this fetches the quiz questions from the json file, tries two paths just in case
+// cache no-store makes sure we always get the newest version and not a old cached one
 function loadQuestionPayload(pathIndex = 0) {
   const questionPaths = ["assets/data/questions.json", "questions.json"];
   if (typeof fetch !== "function" || pathIndex >= questionPaths.length) {
     return;
   }
-  fetch(questionPaths[pathIndex])
+  fetch(questionPaths[pathIndex], { cache: "no-store" })
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Question fetch failed: ${questionPaths[pathIndex]}`);
@@ -49,14 +57,18 @@ function loadQuestionPayload(pathIndex = 0) {
     });
 }
 
+// loadPlayerImage wraps p5 loadImage with a silent error handler so missing files dont crash
 function loadPlayerImage(path) {
   return loadImage(path, undefined, function handlePlayerImageError() {});
 }
 
+// loadUiImage does the same thing but for interface pictures like buttons and stickers
 function loadUiImage(path) {
   return loadImage(path, undefined, function handleUiImageError() {});
 }
 
+// this loads all the ui images at once and bundles them into one object
+// that way any part of the game can grab them by name insted of loading them again
 function loadUiImageSet() {
   return {
     answerCorrect: loadUiImage("assets/ui/answer_correct.jpg"),
@@ -67,6 +79,8 @@ function loadUiImageSet() {
   };
 }
 
+// this tries to go fullscreen when the player clicks start
+// the flag makes sure we only ask once so the browser dosnt block it
 function requestGameFullscreen() {
   if (fullscreenRequested || typeof document === "undefined") {
     return;
@@ -97,6 +111,7 @@ function requestGameFullscreen() {
   }
 }
 
+// this loads every player animation frame and groups them by pose name
 function loadPlayerSpriteSet() {
   return {
     crouch: loadPlayerImage("assets/player/crouch.png"),
@@ -111,6 +126,8 @@ function loadPlayerSpriteSet() {
   };
 }
 
+// this scans the image pixels to find the non-transparent area
+// that way the hitbox matches the actual art and not the whole image rectangle
 function getOpaqueBounds(sprite) {
   if (!sprite || !sprite.width || !sprite.height) {
     return { x: 0, y: 0, width: 1, height: 1 };
@@ -142,6 +159,7 @@ function getOpaqueBounds(sprite) {
   };
 }
 
+// this takes a raw loaded image and figures out the bounds and aspect ratio for it
 function preparePlayerSprite(sprite) {
   if (!sprite || !sprite.width || !sprite.height) {
     return null;
@@ -154,6 +172,7 @@ function preparePlayerSprite(sprite) {
   };
 }
 
+// runs preparePlayerSprite on every frame in the set so they are all ready to draw
 function preparePlayerSpriteSet(spriteSet) {
   return {
     crouch: preparePlayerSprite(spriteSet.crouch),
@@ -165,6 +184,7 @@ function preparePlayerSpriteSet(spriteSet) {
   };
 }
 
+// draws a single player sprite at the given position and height, keeping the aspect ratio correct
 function drawPlayerSprite(spriteData, positionX, floorY, targetHeight, options = {}) {
   if (!spriteData || !spriteData.image) {
     return false;
@@ -191,6 +211,7 @@ function drawPlayerSprite(spriteData, positionX, floorY, targetHeight, options =
   return true;
 }
 
+// preload runs before anything else in p5, we use it to kick off all the image loading
 function preload() {
   questionPayload = { questions: getQuestionFallbackSet() };
   playerSprites = loadPlayerSpriteSet();
@@ -213,11 +234,13 @@ function setup() {
   game = new Game(loadedQuestions);
 }
 
+// draw runs 60 times per second and just tells the game to update then paint the frame
 function draw() {
   game.update();
   game.render();
 }
 
+// p5 calls keyPressed whenever a key goes down, we hand it off to the game object
 function keyPressed() {
   game.handleKeyPressed(key, keyCode);
   if ([UP_ARROW, DOWN_ARROW, LEFT_ARROW, RIGHT_ARROW, ENTER].includes(keyCode)) {
@@ -239,10 +262,12 @@ function mousePressed() {
   return false;
 }
 
+// clampValue makes sure a number doesnt go below the min or above the max
 function clampValue(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, value));
 }
 
+// rectsOverlap checks if two rectangles are touching each other, used for collision
 function rectsOverlap(firstRect, secondRect) {
   return firstRect.left < secondRect.right &&
     firstRect.right > secondRect.left &&
@@ -250,6 +275,7 @@ function rectsOverlap(firstRect, secondRect) {
     firstRect.bottom > secondRect.top;
 }
 
+// drawPixelText draws bold text with a small dark shadow behind it so it pops off the background
 function drawPixelText(label, positionX, positionY, size, fillColor, alignMode = LEFT) {
   push();
   textAlign(alignMode, BASELINE);
@@ -263,6 +289,7 @@ function drawPixelText(label, positionX, positionY, size, fillColor, alignMode =
   pop();
 }
 
+// drawFlatPixelText is the same but without the shadow, used for places that dont need depth
 function drawFlatPixelText(label, positionX, positionY, size, fillColor, alignMode = LEFT, verticalAlign = BASELINE) {
   push();
   textAlign(alignMode, verticalAlign);
@@ -274,6 +301,7 @@ function drawFlatPixelText(label, positionX, positionY, size, fillColor, alignMo
   pop();
 }
 
+// drawPanel draws a dark rounded box with a border and inner line to look like a game card
 function drawPanel(positionX, positionY, panelWidth, panelHeight, fillColor = COLORS.panel) {
   push();
   stroke(COLORS.ink);
@@ -287,6 +315,7 @@ function drawPanel(positionX, positionY, panelWidth, panelHeight, fillColor = CO
   pop();
 }
 
+// drawPixelButton draws a clickable button that can be selected, normal, or greyed out
 function drawPixelButton(positionX, positionY, buttonWidth, buttonHeight, label, selected = false, disabled = false) {
   push();
   const baseColor = disabled ? "#5f6470" : selected ? COLORS.gold : COLORS.blue;
@@ -313,6 +342,7 @@ function drawPixelButton(positionX, positionY, buttonWidth, buttonHeight, label,
   pop();
 }
 
+// drawArrowKeyGlyph draws a little arrow shape to show the player what key to press
 function drawArrowKeyGlyph(positionX, positionY, direction, size, fillColor) {
   push();
   translate(positionX, positionY);
@@ -327,6 +357,7 @@ function drawArrowKeyGlyph(positionX, positionY, direction, size, fillColor) {
   pop();
 }
 
+// drawEnterKeyGlyph draws the enter arrow symbol for the legend at the botom of the title screen
 function drawEnterKeyGlyph(positionX, positionY, size, fillColor) {
   push();
   translate(positionX, positionY);
@@ -347,6 +378,7 @@ function drawEnterKeyGlyph(positionX, positionY, size, fillColor) {
   pop();
 }
 
+// draws one key icon in the control legend, the type decides if its an arrow or enter
 function drawControlLegendKey(positionX, positionY, controlType, label) {
   const keyWidth = 90;
   const keyHeight = 66;
@@ -371,6 +403,7 @@ function drawControlLegendKey(positionX, positionY, controlType, label) {
   pop();
 }
 
+// draws the whole row of key hints at the bottom of the title screen
 function drawTitleControlLegend(positionX, positionY) {
   const controls = [
     { type: "up", label: "Jump" },
@@ -385,6 +418,7 @@ function drawTitleControlLegend(positionX, positionY) {
   }
 }
 
+// drawProgressBar shows a filled bar that grows from 0 to full based on the amount value
 function drawProgressBar(positionX, positionY, barWidth, barHeight, amount, fillColor) {
   push();
   stroke(COLORS.ink);
@@ -397,6 +431,7 @@ function drawProgressBar(positionX, positionY, barWidth, barHeight, amount, fill
   pop();
 }
 
+// drawWrappedText breaks long text into multiple lines so it fits in the given box width
 function drawWrappedText(label, positionX, positionY, boxWidth, lineHeight, size, fillColor, alignMode = LEFT) {
   push();
   textSize(size);
@@ -426,6 +461,7 @@ function drawWrappedText(label, positionX, positionY, boxWidth, lineHeight, size
   pop();
 }
 
+// AudioManager makes simple beep sounds using the web audio api so we dont need sound files
 class AudioManager {
   constructor() {
     this.context = null;
@@ -495,13 +531,16 @@ class AudioManager {
   }
 }
 
+// Game is the main class, it keeps track of what screen youre on and moves the game forward
 class Game {
   constructor(questions) {
     this.questions = Array.isArray(questions) ? questions : getQuestionFallbackSet();
+    // audio, ui, and keys are all set up at the start so they are ready to go
     this.audio = new AudioManager();
     this.ui = new UIManager(this);
     this.keys = { up: false, down: false };
     this.hotspots = [];
+    // state tells the render function which screen to draw right now
     this.state = "title";
     this.previousState = "title";
     this.titlePulse = 0;
@@ -513,6 +552,7 @@ class Game {
   }
 
   resetRunValues() {
+    // clears everything from the previous run so a new game starts fresh
     this.currentWeekIndex = 0;
     this.totalCredits = 0;
     this.weekLostCredits = 0;
@@ -535,6 +575,7 @@ class Game {
   }
 
   startLoading(nextState, label, durationFrames = 72, onDone = null) {
+    // loading screen plays for a set number of frames then moves to nextState
     this.loading = {
       nextState,
       label,
@@ -565,6 +606,7 @@ class Game {
   }
 
   startQuiz() {
+    // filters the full question list to only the questions for this week
     const weekQuestions = this.questions.filter((question) => question.week === this.currentWeek.id);
     this.quiz = new QuizManager(weekQuestions, this.currentWeek.id);
     this.quizCountdownMarker = null;
@@ -611,6 +653,7 @@ class Game {
   }
 
   spendCreditPenalty() {
+    // hitting an obstacle takes one credit and shakes the screen to show the damage
     this.totalCredits -= 1;
     this.weekLostCredits += 1;
     this.screenShake = 12;
@@ -618,6 +661,7 @@ class Game {
   }
 
   update() {
+    // titlePulse animates the start button bobbing up and down
     this.titlePulse += 0.04;
     if (this.screenShake > 0) {
       this.screenShake -= 1;
@@ -663,8 +707,10 @@ class Game {
   }
 
   render() {
+    // clear hotspots each frame so old click areas dont linger
     this.hotspots = [];
     push();
+    // screen shake translates the whole frame by a small random amount
     if (this.screenShake > 0) {
       translate(random(-4, 4), random(-3, 3));
     }
@@ -916,7 +962,9 @@ class Game {
   }
 
   handleMousePressed(pointerX, pointerY) {
+    // wake up audio on first click since browsers need user interaction first
     this.audio.ensureReady();
+    // loop backwards so the last added hotspot wins if two overlap
     for (let hotspotIndex = this.hotspots.length - 1; hotspotIndex >= 0; hotspotIndex -= 1) {
       const hotspot = this.hotspots[hotspotIndex];
       const insideX = pointerX >= hotspot.positionX && pointerX <= hotspot.positionX + hotspot.hotspotWidth;
@@ -929,8 +977,10 @@ class Game {
   }
 }
 
+// Player handles jumping, crouching, gravity, and which sprite frame to show
 class Player {
   constructor() {
+    // player starts near the left side of the screen and stays at ground level
     this.positionX = 218;
     this.positionY = GROUND_Y;
     this.width = 54;
@@ -939,6 +989,7 @@ class Player {
     this.velocityY = 0;
     this.grounded = true;
     this.crouching = false;
+    // invulnerableFrames count down after a hit so the player cant take damage again right away
     this.invulnerableFrames = 0;
     this.jumpTakeoffFrames = 0;
     this.landingFrames = 0;
@@ -950,6 +1001,7 @@ class Player {
   }
 
   jump() {
+    // cant jump again if already in the air
     if (!this.grounded) {
       return false;
     }
@@ -963,6 +1015,7 @@ class Player {
 
   update(keys) {
     const wasGrounded = this.grounded;
+    // only cycle the walk animation when on the ground and not crouching
     const runningOnGround = this.grounded && !keys.down && playerSprites.walk.length > 0;
     this.runFrame = runningOnGround
       ? (this.runFrame + 0.12) % playerSprites.walk.length
@@ -995,6 +1048,7 @@ class Player {
   }
 
   hit() {
+    // 60 frames is one second of invulnerability after getting hit
     this.invulnerableFrames = 60;
   }
 
@@ -1056,6 +1110,7 @@ class Player {
 
   render() {
     const bounds = this.getBounds();
+    // flicker makes the player flash when invulnerable so you can see the hit
     const flicker = this.invulnerableFrames > 0 && frameCount % 6 < 3;
     if (flicker) {
       return;
@@ -1075,6 +1130,7 @@ class Player {
   }
 }
 
+// LevelManager scrolls the world, places obstacles, and knows when the door is reached
 class LevelManager {
   constructor(weekConfig) {
     this.weekConfig = weekConfig;
@@ -1086,6 +1142,7 @@ class LevelManager {
 
   buildObstacles() {
     const obstacles = [];
+    // start placing obstacles a good distance in so the player has time to settle
     let worldX = 920;
     let patternIndex = 0;
     while (worldX < this.weekConfig.length - 600) {
@@ -1134,10 +1191,12 @@ class LevelManager {
   }
 
   getProgress() {
+    // returns 0 at the start and 1 when the level is done, used for the progress bar
     return clampValue(this.scroll / this.weekConfig.length, 0, 1);
   }
 }
 
+// Obstacle stores the type, world position, and whether the player already hit it
 class Obstacle {
   constructor(type, worldX) {
     this.type = type;
@@ -1184,6 +1243,8 @@ class Obstacle {
   }
 }
 
+// QuizManager runs the timed quiz at the end of each commute week
+// it handles the questions, the timer, detecting right answers, and showing the feedback
 class QuizManager {
   constructor(questions, weekNumber) {
     this.questions = questions.slice(0, QUESTIONS_PER_WEEK);
@@ -1235,7 +1296,7 @@ class QuizManager {
       return;
     }
     this.selectedIndex = answerIndex;
-    const correct = answerIndex === this.currentQuestion.correctIndex;
+    const correct = this.isCorrectAnswer(answerIndex);
     if (correct) {
       this.correctCount += 1;
       audio.correct();
@@ -1245,12 +1306,21 @@ class QuizManager {
     this.feedbackFrames = 24;
   }
 
+  isCorrectAnswer(answerIndex) {
+    // correctIndex can be a number or an array of numbers, both cases handeld here
+    const { correctIndex } = this.currentQuestion;
+    if (Array.isArray(correctIndex)) {
+      return correctIndex.includes(answerIndex);
+    }
+    return answerIndex === correctIndex;
+  }
+
   render(gameInstance) {
     const questionBoxY = 162;
     const questionBoxHeight = 132;
     const answerStartY = 348;
     const showingFeedback = this.feedbackFrames > 0;
-    const correct = showingFeedback && this.selectedIndex === this.currentQuestion.correctIndex;
+    const correct = showingFeedback && this.isCorrectAnswer(this.selectedIndex);
     const feedbackImage = uiImages && (correct ? uiImages.answerCorrect : uiImages.answerWrong);
     drawPanel(140, 134, 1000, 452, "#f4f1e8");
     fill("#14213a");
@@ -1267,8 +1337,8 @@ class QuizManager {
       let selected = false;
       let disabled = false;
       if (showingFeedback) {
-        selected = answerIndex === this.currentQuestion.correctIndex;
-        disabled = answerIndex !== this.currentQuestion.correctIndex;
+        selected = this.isCorrectAnswer(answerIndex);
+        disabled = !this.isCorrectAnswer(answerIndex);
       } else {
         selected = answerIndex === this.selectedIndex;
       }
@@ -1283,6 +1353,7 @@ class QuizManager {
   }
 }
 
+// UIManager draws the score and timer panels on top of the game so they dont get mixed in with the world
 class UIManager {
   constructor(gameInstance) {
     this.game = gameInstance;
@@ -1307,6 +1378,7 @@ class UIManager {
   }
 }
 
+// draws the small image card next to the question that shows correct or wrong after you anser
 function drawQuizFeedbackImage(centerX, centerY, imageSize, feedbackImage, accentColor) {
   const frameSize = imageSize + 18;
   push();
@@ -1325,6 +1397,7 @@ function drawQuizFeedbackImage(centerX, centerY, imageSize, feedbackImage, accen
   pop();
 }
 
+// from here down is all the drawing functions for backgrounds, obstacles, and the diploma
 function drawSkyGradient(topColor, bottomColor) {
   for (let row = 0; row < CANVAS_HEIGHT; row += 4) {
     const amount = row / CANVAS_HEIGHT;
@@ -1447,6 +1520,7 @@ function drawLoosePaper(positionX, positionY, scaleAmount, angle) {
   pop();
 }
 
+// each week gets a different background layer that scrolls at different speeds
 function drawTitleLandscape(scroll) {
   drawClouds(scroll * 0.18);
   noStroke();
@@ -1741,6 +1815,7 @@ function drawWeekGround(weekConfig, scroll) {
   drawFinalHallGround(weekConfig.palette, scroll);
 }
 
+// drawGround and its variants paint the floor for each week with their own tile patterns
 function drawHallwayGround(palette, scroll) {
   noStroke();
   fill("#3b556f");
@@ -1820,6 +1895,8 @@ function drawGround(palette, scroll) {
   }
 }
 
+// drawBedObstacle, drawDiscoObstacle, drawPhoneObstacle each draw one type of distraction
+// the damaged flag changes the colors to show the player already hit this one
 function drawBedObstacle(positionX, positionY, damaged) {
   push();
   stroke(COLORS.ink);
@@ -1948,6 +2025,8 @@ function drawPhoneAppIcon(centerX, centerY, damaged) {
   pop();
 }
 
+// drawClassroomDoor draws the door at the end of each commute run
+// the player runs into it to trigger the door transition and start the quiz
 function drawClassroomDoor(positionX, palette) {
   if (positionX < -160 || positionX > CANVAS_WIDTH + 220) {
     return;
@@ -2050,6 +2129,7 @@ function drawLoadingPlatform(progress) {
   rect(160 + progress * 880, 450 - Math.sin(progress * PI) * 85, 32, 32, 2);
 }
 
+// these ending functions build the diploma and result screen for pass or fail
 function drawEndingBackdrop(succeeded, sceneFrame) {
   drawClassroomBackdrop();
   noStroke();
